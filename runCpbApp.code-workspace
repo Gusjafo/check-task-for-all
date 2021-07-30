@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"name": "runCpbApp",
+			"path": "."
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}

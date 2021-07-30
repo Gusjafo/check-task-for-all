@@ -1,0 +1,62 @@
+<%- include("header") -%>
+
+  <div class="box" id="heading">
+    <h1>
+      <%= listTitle %>
+    </h1>
+  </div>
+
+  <div class="box">
+
+    <!-- 
+  <%  newListItems.forEach(function(item){ %>
+
+    <form action="/delete" method="post">
+      <div class="item">
+        <input type="checkbox" name="checkbox" value="<%= item._id %>" onChange="this.form.submit()">
+        <p><%= item.descriptionTask %></p>
+      </div>
+      <input type="hidden" name="listName" value="<%= listTitle %>"></input>
+    </form>
+  <%  }) %> -->
+
+
+    <table style="width:100%">
+      <tr>
+        <th>Tarea</th>
+        <th>Descripción</th>
+        <th>Realizado</th>
+        <th>Hora</th>
+      </tr>
+
+      <% newListItems.forEach(function(item){ %>
+        <form action="/toogleCheckbox" method="post">
+
+          <tr>
+            <td>
+              <%= item.numberOfTask %>
+            </td>
+            <td>
+              <%= item.descriptionTask %>
+            </td>
+            <td>
+              <input type="hidden" name="checkbox" value="<%=item._id%>" onChange="this.form.submit()" >
+              <input type="checkbox" name="checkbox1" value="<%=item._id%>" onChange="this.form.submit()" <%= item.checkbox %> >
+            </td>
+            <td>
+              <%= item.timeEvent %>
+            </td>
+          </tr>
+        </form>
+        <% }) %>
+
+    </table>
+
+
+    <form class="item" action="/" method="post">
+      <input type="text" name="newItem" placeholder="New Item" autocomplete="off">
+      <button type="submit" name="list" value="<%= listTitle %>">+</button>
+    </form>
+  </div>
+
+  <%- include("footer") -%>
