@@ -1,6 +1,6 @@
-// const { Int32 } = require('bson');
 const express = require('express');
 const mongoose = require('mongoose');
+const routing = require('./router/routing');
 
 const app = express();
 const port = 3000;
@@ -8,6 +8,7 @@ const port = 3000;
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(express.static("public"));
+app.use('/routing', routing);
 
 let itemsLocal = [];
 
@@ -16,13 +17,6 @@ mongoose.connect("mongodb+srv://m001-student:m001-mongodb-basics@sandbox.lafax.m
 // Make Mongoose use `findOneAndUpdate()`. Note that this option is `true`
 // by default, you need to set it to false.
 mongoose.set('useFindAndModify', false);
-
-// const db = mongoose.connection;
-// db.on('error', console.error.bind(console, 'connection error:'));
-// db.once('open', function () {
-//     console.log("conectasdos to DB")
-//     // we're connected!
-// });
 
 const itemsSchema = new mongoose.Schema({
     numberOfTask: Number,
@@ -39,8 +33,6 @@ const Item = mongoose.model("Item", itemsSchema);
 //     checkbox: "",
 //     timeEvent: "date.now()"
 // })
-
-
 
 // app.get('/', (req, res) => {
 //     Item.find({}, function (err, foundItems) {
@@ -109,11 +101,6 @@ function actualDay(){
     // var dayNow = currentDay.getDay();  
     return(dayNow);    
 };
-
-
-app.get("/about", function (req, res) {
-    res.render("about");
-});
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
