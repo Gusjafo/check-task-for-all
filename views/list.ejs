@@ -1,59 +1,51 @@
 <%- include("header") -%>
 
-  <div class="container py-2 text-center pich">
+  <div class="container py-2 text-center">
 
-    <div class="text-center py-4 text-uppercase" id="heading">
+    <div class="py-4 text-uppercase" id="heading">
       <h1 class="">
         <%= listTitle %>
       </h1>
     </div>
 
-    <div>
+    <table class="table table-striped mb-5">
 
-      <table class="table mb-5" style="width:100%">
+      <thead class="">
+        <tr>
+          <th>Tarea</th>
+          <th>Descripción</th>
+          <th>Realizado</th>
+          <th>Hora</th>
+        </tr>
+      </thead>
 
-        <thead class="fs-4">
-          <tr>
-            <th>Tarea</th>
-            <th>Descripción</th>
-            <th>Realizado</th>
-            <th>Hora</th>
-          </tr>
-        </thead>
+      <tbody class="align-middle">
+        <% newListItems.forEach(function(item){ %>
+          <form action="/toogleCheckbox" method="post">
+            <tr>
+              <td>
+                <%= item.numberOfTask %>
+              </td>
+              <td class="text-start">
+                <%= item.descriptionTask %>
+              </td>
+              <td>
+                <input type="hidden" name="checkbox" value="<%=item._id%>">
+                <input type="checkbox" name="checkbox1" value="<%=item._id%>" onChange="this.form.submit()"
+                  <%=item.checkbox %> >
+              </td>
+              <td>
+                <%= item.timeEvent %>
+              </td>
+            </tr>
+          </form>
+          <% }) %>
+      </tbody>
 
-        <tbody class="fs-5">
-          <% newListItems.forEach(function(item){ %>
-            <form action="/toogleCheckbox" method="post">
-              <tr>
-                <td>
-                  <%= item.numberOfTask %>
-                </td>
-                <td>
-                  <%= item.descriptionTask %>
-                </td>
-                <td>
-                  <input type="hidden" name="checkbox" value="<%=item._id%>" onChange="this.form.submit()">
-                  <input type="checkbox" name="checkbox1" value="<%=item._id%>" onChange="this.form.submit()"
-                    <%=item.checkbox %> >
-                </td>
-                <td>
-                  <%= item.timeEvent %>
-                </td>
-              </tr>
-            </form>
-            <% }) %>
-        </tbody>
+    </table>
 
-      </table>
-
-      <form class="item text-center" action="/" method="post">
-        <input type="text" name="newItem" placeholder="New Item" autocomplete="off">
-        <button type="submit" name="list" value="<%= listTitle %>">+</button>
-      </form>
-    </div>
+    <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
 
   </div>
-
-
 
   <%- include("footer") -%>

@@ -2,17 +2,24 @@ const express = require('express');
 const mongoose = require('mongoose');
 const routing = require('./router/routing');
 
+require('dotenv').config()
+
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(express.static("public"));
-app.use('/routing', routing);
+app.use('/', routing);
 
 let itemsLocal = [];
 
-mongoose.connect("mongodb+srv://m001-student:m001-mongodb-basics@sandbox.lafax.mongodb.net/runCpbDB?retryWrites=true&w=majority", { useNewUrlParser: true, useUnifiedTopology: true });
+const uri = `mongodb+srv://${process.env.USER}:${process.env.PSW}@sandbox.lafax.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`;
+
+mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
 
 // Make Mongoose use `findOneAndUpdate()`. Note that this option is `true`
 // by default, you need to set it to false.
@@ -52,7 +59,7 @@ const Item = mongoose.model("Item", itemsSchema);
 
 app.get('/', (req, res) => {
     Item.find({}, function (err, foundItems) {
-        itemsLocal = foundItems;    
+        itemsLocal = foundItems;
         var dayToSend = actualDay();
         res.render("list", {
             listTitle: dayToSend,
@@ -64,10 +71,10 @@ app.get('/', (req, res) => {
 app.post("/toogleCheckbox", function (req, res) {
     var checkedItemId = req.body.checkbox;
     var checked = "";
-    var timeToSend = actualTime(); 
+    var timeToSend = actualTime();
 
-    itemsLocal.forEach(function(itemLocal){
-        if(itemLocal._id == checkedItemId) {
+    itemsLocal.forEach(function (itemLocal) {
+        if (itemLocal._id == checkedItemId) {
             itemLocal.checkbox == "checked" ? checked = "" : checked = "checked";
             checked == "checked" ? timeToSend = timeToSend : timeToSend = "";
         }
@@ -77,29 +84,53 @@ app.post("/toogleCheckbox", function (req, res) {
         if (!err) {
             console.log("Successfully updated checked item.");
         }
-    });    
+    });
     // setTimeout(() => {
     //     res.redirect("/");        
     // }, 200);        
     res.redirect("/");
 });
 
-function actualTime(){
+app.get("/update", function (req, res) {
+    var dayToSend = actualDay();
+    res.render("update", {
+        listTitle: dayToSend
+    });
+})
+
+app.post("/update", function (req, res) {
+    var itemToAdd = req.body.inputDesc;
+    const item = new Item({
+        numberOfTask: 8,
+        descriptionTask: itemToAdd,
+        checkbox: "",
+        timeEvent: ""
+    })
+
+    item.save(function (err) {
+        if (err) return handleError(err);
+        // saved!
+    });
+
+    res.redirect("/update");
+})
+
+function actualTime() {
     var currentTime = new Date();
     var hourNow = currentTime.getHours();
     var minuteNow = currentTime.getMinutes();
     var secondNow = currentTime.getSeconds();
-    var timeNow = `${hourNow}:${minuteNow}:${secondNow}`;    
-    return(timeNow);
+    var timeNow = `${hourNow}:${minuteNow}:${secondNow}`;
+    return (timeNow);
 };
 
-function actualDay(){
+function actualDay() {
     var currentDay = new Date();
     // var options = {weekday: "long", year: "numeric", month: "long", day: "numeric"};
-    var options = {weekday: "long", day: "numeric"};
+    var options = { weekday: "long", day: "numeric" };
     var dayNow = currentDay.toLocaleDateString("es-ES", options);
     // var dayNow = currentDay.getDay();  
-    return(dayNow);    
+    return (dayNow);
 };
 
 app.listen(port, () => {
