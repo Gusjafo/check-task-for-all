@@ -10,4 +10,22 @@
   
 </head>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function (event) {
+      var scrollpos = sessionStorage.getItem('scrollpos');
+      if (scrollpos) {
+          window.scrollTo({
+            left: 0,
+            top: scrollpos,
+            behavior: 'auto'
+          });
+          sessionStorage.removeItem('scrollpos');
+      }
+  });
+
+  window.addEventListener("beforeunload", function (e) {
+      sessionStorage.setItem('scrollpos', window.scrollY);
+  });
+</script>
+
 <body class="bg-light">

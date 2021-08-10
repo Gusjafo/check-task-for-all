@@ -2,10 +2,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 const routing = require('./router/routing');
 
-require('dotenv').config()
-
 const app = express();
 const port = process.env.PORT || 3000;
+
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
+
+require('dotenv').config()
+
+
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
@@ -69,6 +76,7 @@ app.get('/', (req, res) => {
 })
 
 app.post("/toogleCheckbox", function (req, res) {
+
     var checkedItemId = req.body.checkbox;
     var checked = "";
     var timeToSend = actualTime();
@@ -80,14 +88,14 @@ app.post("/toogleCheckbox", function (req, res) {
         }
     });
 
-    Item.findOneAndUpdate({ _id: checkedItemId }, { checkbox: checked, timeEvent: timeToSend }, function (err) {
-        if (!err) {
-            console.log("Successfully updated checked item.");
-        }
-    });
-    // setTimeout(() => {
-    //     res.redirect("/");        
-    // }, 200);        
+    Item.findOneAndUpdate(
+        { _id: checkedItemId },
+        { checkbox: checked, timeEvent: timeToSend },
+        function (err) {
+            if (!err) {
+                console.log("Successfully updated checked item.");
+            }
+        });
     res.redirect("/");
 });
 
@@ -133,6 +141,6 @@ function actualDay() {
     return (dayNow);
 };
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })

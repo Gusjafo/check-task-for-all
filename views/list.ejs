@@ -21,7 +21,7 @@
 
       <tbody class="align-middle">
         <% newListItems.forEach(function(item){ %>
-          <form action="/toogleCheckbox" method="post">
+          <form action="/toogleCheckbox" method="post">            
             <tr>
               <td>
                 <%= item.numberOfTask %>
@@ -41,7 +41,7 @@
           </form>
           <% }) %>
       </tbody>
-
+      
     </table>
 
     <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
