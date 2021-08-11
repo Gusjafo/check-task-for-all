@@ -29,8 +29,7 @@
               <td class="text-start">
                 <%= item.descriptionTask %>
               </td>
-              <td>
-                <input type="hidden" name="checkbox" value="<%=item._id%>">
+              <td>                
                 <input type="checkbox" name="checkbox1" value="<%=item._id%>" <%=item.checkbox %> >
               </td>
               <td>
@@ -42,8 +41,6 @@
       </tbody>
 
     </table>
-
-    <button type="button"  class="btn btn-dark boton">test communication</button>
 
     <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
 
