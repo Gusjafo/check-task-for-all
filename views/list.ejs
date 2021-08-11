@@ -21,7 +21,7 @@
 
       <tbody class="align-middle">
         <% newListItems.forEach(function(item){ %>
-          <form action="/toogleCheckbox" method="post">            
+          <form action="">
             <tr>
               <td>
                 <%= item.numberOfTask %>
@@ -31,8 +31,7 @@
               </td>
               <td>
                 <input type="hidden" name="checkbox" value="<%=item._id%>">
-                <input type="checkbox" name="checkbox1" value="<%=item._id%>" onChange="this.form.submit()"
-                  <%=item.checkbox %> >
+                <input type="checkbox" name="checkbox1" value="<%=item._id%>" <%=item.checkbox %> >
               </td>
               <td>
                 <%= item.timeEvent %>
@@ -41,8 +40,10 @@
           </form>
           <% }) %>
       </tbody>
-      
+
     </table>
+
+    <button type="button"  class="btn btn-dark boton">test communication</button>
 
     <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
 

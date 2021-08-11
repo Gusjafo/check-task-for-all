@@ -7,6 +7,26 @@
 <script>
   var socket = io();
 
+  var pageImput = document.querySelectorAll('input');
+
+  for (i of pageImput) {
+    i.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (true) {
+        console.log("Saliendo desde host con " + this.value)
+        socket.emit('chat message', this.value);
+      }
+    });
+  }
+
+  socket.on('chat message', function (msg) {
+    console.log("volviendo a host " + msg)
+    if(msg){
+      location.reload();
+    }
+  
+  });
+
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"

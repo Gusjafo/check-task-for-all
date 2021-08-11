@@ -1,18 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const routing = require('./router/routing');
-
 const app = express();
-const port = process.env.PORT || 3000;
-
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require("socket.io");
-const io = new Server(server);
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 
 require('dotenv').config()
 
-
+const port = process.env.PORT || 3000;
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
@@ -75,29 +70,6 @@ app.get('/', (req, res) => {
     });
 })
 
-app.post("/toogleCheckbox", function (req, res) {
-
-    var checkedItemId = req.body.checkbox;
-    var checked = "";
-    var timeToSend = actualTime();
-
-    itemsLocal.forEach(function (itemLocal) {
-        if (itemLocal._id == checkedItemId) {
-            itemLocal.checkbox == "checked" ? checked = "" : checked = "checked";
-            checked == "checked" ? timeToSend = timeToSend : timeToSend = "";
-        }
-    });
-
-    Item.findOneAndUpdate(
-        { _id: checkedItemId },
-        { checkbox: checked, timeEvent: timeToSend },
-        function (err) {
-            if (!err) {
-                console.log("Successfully updated checked item.");
-            }
-        });
-    res.redirect("/");
-});
 
 app.get("/update", function (req, res) {
     var dayToSend = actualDay();
@@ -123,6 +95,36 @@ app.post("/update", function (req, res) {
     res.redirect("/update");
 })
 
+io.on('connection', (socket) => {
+    socket.on('chat message', msg => {
+        console.log("Llegando a servidor " + msg)
+
+        var checkedItemId = msg;
+        var checked = "";
+        var timeToSend = actualTime();
+
+        itemsLocal.forEach(function (itemLocal) {
+            if (itemLocal._id == checkedItemId) {
+                itemLocal.checkbox == "checked" ? checked = "" : checked = "checked";
+                checked == "checked" ? timeToSend = timeToSend : timeToSend = "";
+            }
+        });
+
+        Item.findOneAndUpdate(
+            { _id: checkedItemId },
+            { checkbox: checked, timeEvent: timeToSend },
+            function (err) {
+                if (!err) {
+                    console.log("Successfully updated checked item.");
+                }
+            });
+
+
+        io.emit('chat message', msg);
+
+    });
+});
+
 function actualTime() {
     var currentTime = new Date();
     var hourNow = currentTime.getHours();
@@ -141,6 +143,6 @@ function actualDay() {
     return (dayNow);
 };
 
-server.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
+http.listen(port, () => {
+    console.log(`Socket.IO server running at http://localhost:${port}/`);
 })
