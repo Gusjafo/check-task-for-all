@@ -37,6 +37,16 @@ const itemsSchema = new mongoose.Schema({
 
 const Item = mongoose.model("Item", itemsSchema);
 
+const userSchema = new mongoose.Schema({
+    name: { type: String },
+    email: { type: String },
+    token: { type: String },
+});
+
+const User = mongoose.model("User", userSchema);
+
+
+
 const config = {
     auth: {
         clientId: process.env.CLIENTID, //Id. de aplicación (cliente)
@@ -89,6 +99,7 @@ app.get('/', (req, res) => {
 
     // get url to sign user in and consent to scopes needed for application
     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
+
         res.redirect(response);
     }).catch((error) => console.log(JSON.stringify(error)));
 });
@@ -99,10 +110,26 @@ app.get('/redirect', (req, res) => {
         scopes: ["user.read"],
         redirectUri: "http://localhost:3000/redirect",
     };
+    // console.log(req);  
+
+
+
 
     cca.acquireTokenByCode(tokenRequest).then((response) => {
-        // console.log("\nResponse: \n: has podido acceder", response);
-        console.log("\n Mail: ", response.account.username);
+        console.log("\nResponse: \n: has podido acceder", response);
+        // console.log("\n Mail: ", response.account.username);
+
+        const user = new User({
+            name: response.account.name,
+            email: response.account.username,
+            token: response.accessToken
+        })
+
+        user.save(function (err) {
+            if (err) return handleError(err);
+            // saved!
+        });
+
         // res.sendStatus(200);
         res.redirect('/inicio');
     }).catch((error) => {
@@ -112,6 +139,8 @@ app.get('/redirect', (req, res) => {
 });
 
 app.get('/inicio', (req, res) => {
+    var token = req.body.tokenRequest;
+    console.log(token);
     Item.find({}, function (err, foundItems) {
         itemsLocal = foundItems;
         var dayToSend = actualDay();
