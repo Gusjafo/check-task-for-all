@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const msal = require('@azure/msal-node');
 const routing = require('./router/routing');
 const app = express();
 const http = require('http').Server(app);
@@ -36,6 +37,27 @@ const itemsSchema = new mongoose.Schema({
 
 const Item = mongoose.model("Item", itemsSchema);
 
+const config = {
+    auth: {
+        clientId: process.env.CLIENTID, //Id. de aplicación (cliente)
+        authority: "https://login.microsoftonline.com/common",
+        clientSecret: process.env.CLIENTSECRET  //Valor secreto (cliente)
+    },
+    system: {
+        loggerOptions: {
+            loggerCallback(loglevel, message, containsPii) {
+                console.log(message);
+            },
+            piiLoggingEnabled: false,
+            logLevel: msal.LogLevel.Verbose,
+        }
+    }
+};
+
+// Create msal application object
+const cca = new msal.ConfidentialClientApplication(config);
+
+
 // const item4 = new Item({
 //     numberOfTask: 2,
 //     descriptionTask: "Hola tu fuck mundo",
@@ -60,6 +82,36 @@ const Item = mongoose.model("Item", itemsSchema);
 // })
 
 app.get('/', (req, res) => {
+    const authCodeUrlParameters = {
+        scopes: ["user.read"],
+        redirectUri: "http://localhost:3000/redirect",
+    };
+
+    // get url to sign user in and consent to scopes needed for application
+    cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
+        res.redirect(response);
+    }).catch((error) => console.log(JSON.stringify(error)));
+});
+
+app.get('/redirect', (req, res) => {
+    const tokenRequest = {
+        code: req.query.code,
+        scopes: ["user.read"],
+        redirectUri: "http://localhost:3000/redirect",
+    };
+
+    cca.acquireTokenByCode(tokenRequest).then((response) => {
+        // console.log("\nResponse: \n: has podido acceder", response);
+        console.log("\n Mail: ", response.account.username);
+        // res.sendStatus(200);
+        res.redirect('/inicio');
+    }).catch((error) => {
+        console.log(error);
+        res.status(500).send(error);
+    });
+});
+
+app.get('/inicio', (req, res) => {
     Item.find({}, function (err, foundItems) {
         itemsLocal = foundItems;
         var dayToSend = actualDay();
