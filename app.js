@@ -99,7 +99,6 @@ app.get('/', (req, res) => {
 
     // get url to sign user in and consent to scopes needed for application
     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-
         res.redirect(response);
     }).catch((error) => console.log(JSON.stringify(error)));
 });
@@ -110,25 +109,32 @@ app.get('/redirect', (req, res) => {
         scopes: ["user.read"],
         redirectUri: "http://localhost:3000/redirect",
     };
-    // console.log(req);  
-
-
-
-
     cca.acquireTokenByCode(tokenRequest).then((response) => {
-        console.log("\nResponse: \n: has podido acceder", response);
+        // console.log("\nResponse: \n: has podido acceder", response);
         // console.log("\n Mail: ", response.account.username);
+        var usrEmail = response.account.username;
+        User.findOne({ email: usrEmail }, function (err, user) {
+            if (err) {
+                return handleError(err);
+            } else {
+                console.log(user);
+                if (user === null) {
+                    addNewUser(response);
+                }
+            }                        
+        });       
 
-        const user = new User({
-            name: response.account.name,
-            email: response.account.username,
-            token: response.accessToken
-        })
-
-        user.save(function (err) {
-            if (err) return handleError(err);
-            // saved!
-        });
+        function addNewUser(response){
+            const user = new User({
+                name: response.account.name,
+                email: response.account.username,
+                token: response.accessToken
+            });    
+            user.save(function (err) {
+                if (err) return handleError(err);
+                // saved!
+            });
+        };
 
         // res.sendStatus(200);
         res.redirect('/inicio');
@@ -139,8 +145,6 @@ app.get('/redirect', (req, res) => {
 });
 
 app.get('/inicio', (req, res) => {
-    var token = req.body.tokenRequest;
-    console.log(token);
     Item.find({}, function (err, foundItems) {
         itemsLocal = foundItems;
         var dayToSend = actualDay();
@@ -150,7 +154,6 @@ app.get('/inicio', (req, res) => {
         });
     });
 })
-
 
 app.get("/update", function (req, res) {
     var dayToSend = actualDay();
@@ -223,6 +226,7 @@ function actualDay() {
     // var dayNow = currentDay.getDay();  
     return (dayNow);
 };
+
 
 http.listen(port, () => {
     console.log(`Socket.IO server running at http://localhost:${port}/`);
