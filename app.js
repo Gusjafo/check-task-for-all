@@ -19,45 +19,12 @@ app.use('/', routing);
 let itemsLocal = [];
 let actualUserToken = "";
 
+const Item = require("./model/item")
 
-const itemsSchema = new mongoose.Schema({
-    numberOfTask: Number,
-    descriptionTask: String,
-    checkbox: String,
-    timeEvent: String
-});
-
-const Item = mongoose.model("Item", itemsSchema);
-
-const userSchema = new mongoose.Schema({
-    name: { type: String },
-    email: { type: String },
-    token: { type: String },
-});
-
-const User = mongoose.model("User", userSchema);
-
-
-
-const config = {
-    auth: {
-        clientId: process.env.CLIENTID, //Id. de aplicación (cliente)
-        authority: "https://login.microsoftonline.com/common",
-        clientSecret: process.env.CLIENTSECRET  //Valor secreto (cliente)
-    },
-    system: {
-        loggerOptions: {
-            loggerCallback(loglevel, message, containsPii) {
-                console.log(message);
-            },
-            piiLoggingEnabled: false,
-            logLevel: msal.LogLevel.Verbose,
-        }
-    }
-};
+const User = require("./model/user");
 
 // Create msal application object
-const cca = new msal.ConfidentialClientApplication(config);
+const cca = require("./config/login");
 
 
 // const item4 = new Item({
