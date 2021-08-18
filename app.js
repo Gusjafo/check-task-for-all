@@ -1,3 +1,6 @@
+require('dotenv').config()
+require("./config/database").connect();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const msal = require('@azure/msal-node');
@@ -5,8 +8,6 @@ const routing = require('./router/routing');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
-
-require('dotenv').config()
 
 const port = process.env.PORT || 3000;
 
@@ -18,16 +19,6 @@ app.use('/', routing);
 let itemsLocal = [];
 let actualUserToken = "";
 
-const uri = `mongodb+srv://${process.env.USER}:${process.env.PSW}@sandbox.lafax.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`;
-
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
-
-// Make Mongoose use `findOneAndUpdate()`. Note that this option is `true`
-// by default, you need to set it to false.
-mongoose.set('useFindAndModify', false);
 
 const itemsSchema = new mongoose.Schema({
     numberOfTask: Number,
