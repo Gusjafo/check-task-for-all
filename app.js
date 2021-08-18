@@ -16,6 +16,7 @@ app.use(express.static("public"));
 app.use('/', routing);
 
 let itemsLocal = [];
+let actualUserToken = "";
 
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PSW}@sandbox.lafax.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`;
 
@@ -70,7 +71,7 @@ const cca = new msal.ConfidentialClientApplication(config);
 
 // const item4 = new Item({
 //     numberOfTask: 2,
-//     descriptionTask: "Hola tu fuck mundo",
+//     descriptionTask: "Hola tu mundo",
 //     checkbox: "",
 //     timeEvent: "date.now()"
 // })
@@ -99,25 +100,32 @@ app.get('/', (req, res) => {
 
     // get url to sign user in and consent to scopes needed for application
     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
+        console.log("PRIMERO: ", response);
         res.redirect(response);
     }).catch((error) => console.log(JSON.stringify(error)));
 });
 
 app.get('/redirect', (req, res) => {
+    console.log("req:", req);
+    console.log("req2:" +  req);
     const tokenRequest = {
         code: req.query.code,
         scopes: ["user.read"],
         redirectUri: "http://localhost:3000/redirect",
-    };
+    };    
+    console.log("CODE: " + tokenRequest.code);
     cca.acquireTokenByCode(tokenRequest).then((response) => {
         // console.log("\nResponse: \n: has podido acceder", response);
         // console.log("\n Mail: ", response.account.username);
         var usrEmail = response.account.username;
-        User.findOne({ email: usrEmail }, function (err, user) {
+
+        console.log("SEGUNDO: ", response);
+
+        User.findOne({ token: tokenRequest.code }, function (err, user) {
             if (err) {
                 return handleError(err);
             } else {
-                console.log(user);
+                console.log("before segundo: ", user);
                 if (user === null) {
                     addNewUser(response);
                 }
@@ -128,16 +136,25 @@ app.get('/redirect', (req, res) => {
             const user = new User({
                 name: response.account.name,
                 email: response.account.username,
-                token: response.accessToken
-            });    
+                token: tokenRequest.code
+            });   
+            
             user.save(function (err) {
                 if (err) return handleError(err);
                 // saved!
-            });
+            });            
         };
 
+        actualUserToken = tokenRequest.code;
+        console.log(actualUserToken);
+
         // res.sendStatus(200);
-        res.redirect('/inicio');
+        setTimeout(() => {
+            res.redirect('/inicio');
+        },3000);
+        
+
+
     }).catch((error) => {
         console.log(error);
         res.status(500).send(error);
@@ -145,14 +162,39 @@ app.get('/redirect', (req, res) => {
 });
 
 app.get('/inicio', (req, res) => {
-    Item.find({}, function (err, foundItems) {
-        itemsLocal = foundItems;
-        var dayToSend = actualDay();
-        res.render("list", {
-            listTitle: dayToSend,
-            newListItems: foundItems
-        });
+
+    console.log("llegue a inicio");
+
+    User.findOne({ token: actualUserToken }, function (err, user) {
+        if (err) {
+            return handleError(err);
+        } else {
+            console.log("inside /inicio ", user);
+            if (user) {
+                Item.find({}, function (err, foundItems) {
+                    itemsLocal = foundItems;
+                    var dayToSend = actualDay();
+                    res.render("list", {
+                        listTitle: dayToSend,
+                        newListItems: foundItems,
+
+                    });
+                });
+            } else {
+                res.send("User don't identify")
+            }
+        }                        
     });
+
+
+    // Item.find({}, function (err, foundItems) {
+    //     itemsLocal = foundItems;
+    //     var dayToSend = actualDay();
+    //     res.render("list", {
+    //         listTitle: dayToSend,
+    //         newListItems: foundItems
+    //     });
+    // });
 })
 
 app.get("/update", function (req, res) {
