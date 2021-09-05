@@ -4,6 +4,7 @@ require("./config/database").connect();
 const express = require('express');
 const mongoose = require('mongoose');
 // const msal = require('@azure/msal-node');
+const jwt = require('jsonwebtoken');
 const routing = require('./router/routing');
 const app = express();
 const http = require('http').Server(app);
@@ -54,12 +55,12 @@ app.get('/redirect', (req, res) => {
     };
 
     let token_key = req.query.code;
-    
-   
+
+
     console.log("CODE: " + tokenRequest.code);
     cca.acquireTokenByCode(tokenRequest).then((response) => {
 
-        console.log("\n response: ", response);
+        // console.log("\n response: ", response);
 
         console.log("\n\n token: ", response.idToken);
         console.log("\n username: ", response.account.username);
@@ -86,7 +87,6 @@ app.get('/redirect', (req, res) => {
                 email: response.account.username,
                 name: response.account.name,
                 key: userkey,
-                token_key: token_key,
             });
 
             user.save(function (err) {
@@ -99,9 +99,9 @@ app.get('/redirect', (req, res) => {
         // console.log(actualUserToken);
 
         res
-        .status(200)
-        .cookie('token', response.idToken)
-        .redirect(301, '/inicio');
+            .status(200)
+            .cookie('token', response.idToken)
+            .redirect(301, '/inicio');
 
         // res.sendStatus(200);
         // setTimeout(() => {
@@ -116,7 +116,18 @@ app.get('/redirect', (req, res) => {
 
 app.get('/inicio', auth, (req, res) => {
     // console.log("llegue a inicio", req);
-    User.findOne({ token_key: actualUserToken }, function (err, user) {
+    const tokenReq =
+        req.headers.cookie["x-access-token"] || req.headers.cookie || req.headers["x-access-token"];
+    let token = tokenReq.split("=").pop();
+    console.log("llegue a inicio, token: ", token);
+
+    const decoded = jwt.decode(token);    
+    console.log("decoded: ", decoded);
+    let buscar = decoded.oid + decoded.tid;
+    console.log(buscar);
+
+
+    User.findOne({ key: buscar }, function (err, user) {
         if (err) {
             return handleError(err);
         } else {

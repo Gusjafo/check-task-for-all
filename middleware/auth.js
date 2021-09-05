@@ -5,17 +5,25 @@ const config = process.env;
 const verifyToken = (req, res, next) => {
     // console.log("body: ", req);
     const token = 
-    req.headers.cookie["x-access-token"] || req.headers.cookie || req.headers["x-access-token"];
+    req.headers.cookie["token"] ||
+    req.headers.cookie ||
+    req.headers["token"];
     console.log("token: " + token);
     if(!token) {
-        return res.status(403).send("A token is required for authentication");
+        return res
+        .clearCookie('x-access-token', { path: './inicio'})
+        .status(403).send("A token is required for authentication");
     }
     try {
-        const decoded = jwt.decode(token);
-        console.log("decoded: " + decoded);
+        const decoded = jwt.decode(token);    
+        console.log("decoded: ", decoded);    
         req.user = decoded;
+        
+
     } catch (err) {
-        return res.status(401).send("Invalid Token");
+        return res
+        .clearCookie('x-access-token', { path: './inicio'})
+        .status(401).send("Invalid Token");
     }
     return next();
 };
