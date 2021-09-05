@@ -1,13 +1,15 @@
-require('dotenv').config()
+require('dotenv').config();
 require("./config/database").connect();
 
 const express = require('express');
 const mongoose = require('mongoose');
-const msal = require('@azure/msal-node');
+// const msal = require('@azure/msal-node');
 const routing = require('./router/routing');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+
+
 
 const port = process.env.PORT || 3000;
 
@@ -19,36 +21,16 @@ app.use('/', routing);
 let itemsLocal = [];
 let actualUserToken = "";
 
+
 const Item = require("./model/item")
 
 const User = require("./model/user");
 
+const auth = require("./middleware/auth");
+
 // Create msal application object
 const cca = require("./config/login");
 
-
-// const item4 = new Item({
-//     numberOfTask: 2,
-//     descriptionTask: "Hola tu mundo",
-//     checkbox: "",
-//     timeEvent: "date.now()"
-// })
-
-// app.get('/', (req, res) => {
-//     Item.find({}, function (err, foundItems) {
-//         console.log(foundItems.length);
-
-//         if (foundItems.length === 3) {
-//             item4.save(function (err) {
-//                 if (err) return handleError(err);
-//                 // saved!
-//             });
-//             res.redirect("/");
-//         } else {
-//             res.render("list", { listTitle: "Today", newListItems: foundItems });
-//         }
-//     });
-// })
 
 app.get('/', (req, res) => {
     const authCodeUrlParameters = {
@@ -58,60 +40,73 @@ app.get('/', (req, res) => {
 
     // get url to sign user in and consent to scopes needed for application
     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-        console.log("PRIMERO: ", response);
+        // console.log("PRIMERO: ", response);
         res.redirect(response);
     }).catch((error) => console.log(JSON.stringify(error)));
 });
 
 app.get('/redirect', (req, res) => {
-    console.log("req:", req);
-    console.log("req2:" +  req);
+    // console.log("req:", req);
     const tokenRequest = {
         code: req.query.code,
         scopes: ["user.read"],
         redirectUri: "http://localhost:3000/redirect",
-    };    
+    };
+
+    let token_key = req.query.code;
+    
+   
     console.log("CODE: " + tokenRequest.code);
     cca.acquireTokenByCode(tokenRequest).then((response) => {
-        // console.log("\nResponse: \n: has podido acceder", response);
-        // console.log("\n Mail: ", response.account.username);
-        var usrEmail = response.account.username;
 
-        console.log("SEGUNDO: ", response);
+        console.log("\n response: ", response);
 
-        User.findOne({ token: tokenRequest.code }, function (err, user) {
+        console.log("\n\n token: ", response.idToken);
+        console.log("\n username: ", response.account.username);
+        console.log("\n name: ", response.account.name);
+        console.log("\n oid: ", response.account.idTokenClaims.oid);
+        console.log("\n tid: ", response.account.idTokenClaims.tid);
+
+        let userkey = response.account.idTokenClaims.oid + "/" + response.account.idTokenClaims.tid;
+        console.log(userkey);
+
+        User.findOne({ key: userkey }, function (err, user) {
             if (err) {
                 return handleError(err);
             } else {
-                console.log("before segundo: ", user);
+                // console.log("before segundo: ", user);
                 if (user === null) {
                     addNewUser(response);
                 }
-            }                        
-        });       
+            }
+        });
 
-        function addNewUser(response){
+        function addNewUser(response) {
             const user = new User({
-                name: response.account.name,
                 email: response.account.username,
-                token: tokenRequest.code
-            });   
-            
+                name: response.account.name,
+                key: userkey,
+                token_key: token_key,
+            });
+
             user.save(function (err) {
                 if (err) return handleError(err);
                 // saved!
-            });            
+            });
         };
 
         actualUserToken = tokenRequest.code;
-        console.log(actualUserToken);
+        // console.log(actualUserToken);
+
+        res
+        .status(200)
+        .cookie('token', response.idToken)
+        .redirect(301, '/inicio');
 
         // res.sendStatus(200);
-        setTimeout(() => {
-            res.redirect('/inicio');
-        },3000);
-        
-
+        // setTimeout(() => {
+        //     res.redirect('/inicio');
+        // },3000);
 
     }).catch((error) => {
         console.log(error);
@@ -119,15 +114,13 @@ app.get('/redirect', (req, res) => {
     });
 });
 
-app.get('/inicio', (req, res) => {
-
-    console.log("llegue a inicio");
-
-    User.findOne({ token: actualUserToken }, function (err, user) {
+app.get('/inicio', auth, (req, res) => {
+    // console.log("llegue a inicio", req);
+    User.findOne({ token_key: actualUserToken }, function (err, user) {
         if (err) {
             return handleError(err);
         } else {
-            console.log("inside /inicio ", user);
+            // console.log("inside /inicio ", user);
             if (user) {
                 Item.find({}, function (err, foundItems) {
                     itemsLocal = foundItems;
@@ -141,7 +134,7 @@ app.get('/inicio', (req, res) => {
             } else {
                 res.send("User don't identify")
             }
-        }                        
+        }
     });
 
 
