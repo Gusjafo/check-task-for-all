@@ -59,55 +59,33 @@ app.get('/redirect', (req, res) => {
 
     console.log("CODE: " + tokenRequest.code);
     cca.acquireTokenByCode(tokenRequest).then((response) => {
-
-        // console.log("\n response: ", response);
-
-        console.log("\n\n token: ", response.idToken);
-        console.log("\n username: ", response.account.username);
-        console.log("\n name: ", response.account.name);
-        console.log("\n oid: ", response.account.idTokenClaims.oid);
-        console.log("\n tid: ", response.account.idTokenClaims.tid);
-
         let userkey = response.account.idTokenClaims.oid + "/" + response.account.idTokenClaims.tid;
         console.log(userkey);
-
         User.findOne({ key: userkey }, function (err, user) {
             if (err) {
                 return handleError(err);
             } else {
-                // console.log("before segundo: ", user);
                 if (user === null) {
                     addNewUser(response);
                 }
             }
         });
-
         function addNewUser(response) {
             const user = new User({
                 email: response.account.username,
                 name: response.account.name,
                 key: userkey,
             });
-
             user.save(function (err) {
                 if (err) return handleError(err);
                 // saved!
             });
         };
-
         actualUserToken = tokenRequest.code;
-        // console.log(actualUserToken);
-
         res
             .status(200)
             .cookie('token', response.idToken)
             .redirect(301, '/inicio');
-
-        // res.sendStatus(200);
-        // setTimeout(() => {
-        //     res.redirect('/inicio');
-        // },3000);
-
     }).catch((error) => {
         console.log(error);
         res.status(500).send(error);
@@ -115,19 +93,9 @@ app.get('/redirect', (req, res) => {
 });
 
 app.get('/inicio', auth, (req, res) => {
-    // console.log("llegue a inicio", req);
-    const tokenReq =
-        req.headers.cookie["x-access-token"] || req.headers.cookie || req.headers["x-access-token"];
-    let token = tokenReq.split("=").pop();
-    console.log("llegue a inicio, token: ", token);
-
-    const decoded = jwt.decode(token);    
-    console.log("decoded: ", decoded);
-    let buscar = decoded.oid + decoded.tid;
-    console.log(buscar);
-
-
-    User.findOne({ key: buscar }, function (err, user) {
+    let decoded = decodeToken(req);
+    let userKey = decoded.oid + "/" + decoded.tid;
+    User.findOne({ key: userKey }, function (err, user) {
         if (err) {
             return handleError(err);
         } else {
@@ -147,8 +115,6 @@ app.get('/inicio', auth, (req, res) => {
             }
         }
     });
-
-
     // Item.find({}, function (err, foundItems) {
     //     itemsLocal = foundItems;
     //     var dayToSend = actualDay();
@@ -159,7 +125,11 @@ app.get('/inicio', auth, (req, res) => {
     // });
 })
 
-app.get("/update", function (req, res) {
+app.get("/update", auth, (req, res) => {
+    let decoded = decodeToken(req);
+    if (decoded.preferred_username != process.env.ADMIN) {
+        return res.redirect(401, '/inicio');
+    }
     var dayToSend = actualDay();
     res.render("update", {
         listTitle: dayToSend
@@ -172,7 +142,8 @@ app.post("/update", function (req, res) {
         numberOfTask: 8,
         descriptionTask: itemToAdd,
         checkbox: "",
-        timeEvent: ""
+        timeEvent: "",
+        updatedBy: ""
     })
 
     item.save(function (err) {
@@ -183,13 +154,24 @@ app.post("/update", function (req, res) {
     res.redirect("/update");
 })
 
-io.on('connection', (socket) => {
-    socket.on('chat message', msg => {
-        console.log("Llegando a servidor " + msg)
+app.get('/savelist', auth, (req, res) => {
 
-        var checkedItemId = msg;
-        var checked = "";
-        var timeToSend = actualTime();
+})
+
+app.get('/historic', auth, (req, res) => {
+
+})
+
+io.on('connection', (socket) => {
+    socket.on('chat message', (msg, tokenUser) => {
+        // console.log("Llegando a servidor " + msg + tokenUser);
+
+        let checkedItemId = msg;
+        let checked = "";
+        let timeToSend = actualTime();
+
+        let decoded = jwt.decode(tokenUser);
+        let name = decoded.name;
 
         itemsLocal.forEach(function (itemLocal) {
             if (itemLocal._id == checkedItemId) {
@@ -200,16 +182,13 @@ io.on('connection', (socket) => {
 
         Item.findOneAndUpdate(
             { _id: checkedItemId },
-            { checkbox: checked, timeEvent: timeToSend },
+            { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
             function (err) {
                 if (!err) {
                     console.log("Successfully updated checked item.");
                 }
             });
-
-
         io.emit('chat message', msg);
-
     });
 });
 
@@ -217,19 +196,26 @@ function actualTime() {
     var currentTime = new Date();
     var hourNow = currentTime.getHours();
     var minuteNow = currentTime.getMinutes();
-    var secondNow = currentTime.getSeconds();
-    var timeNow = `${hourNow}:${minuteNow}:${secondNow}`;
+    var timeNow = `${hourNow}:${minuteNow}`;
     return (timeNow);
 };
 
 function actualDay() {
     var currentDay = new Date();
-    // var options = {weekday: "long", year: "numeric", month: "long", day: "numeric"};
     var options = { weekday: "long", day: "numeric" };
-    var dayNow = currentDay.toLocaleDateString("es-ES", options);
-    // var dayNow = currentDay.getDay();  
+    var dayNow = currentDay.toLocaleDateString("es-ES", options);  
     return (dayNow);
 };
+
+function decodeToken(req) {
+    const tokenReq =
+        req.headers.cookie["x-access-token"] || 
+        req.headers.cookie || 
+        req.headers["x-access-token"];
+    let token = tokenReq.split("=").pop();
+    const decoded = jwt.decode(token);
+    return decoded;
+}
 
 
 http.listen(port, () => {

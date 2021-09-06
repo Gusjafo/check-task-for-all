@@ -16,6 +16,7 @@
           <th>Descripción</th>
           <th>Realizado</th>
           <th>Hora</th>
+          <th>UpdatedBy</th>
         </tr>
       </thead>
 
@@ -29,11 +30,16 @@
               <td class="text-start">
                 <%= item.descriptionTask %>
               </td>
-              <td>                
-                <input type="checkbox" name="checkbox1" value="<%=item._id%>" <%=item.checkbox %> >
+              <td>
+                <label for="checkbox">
+                  <input type="checkbox" name="checkbox" value="<%=item._id%>" <%=item.checkbox %> autocomplete="off">
+                </label>
               </td>
               <td>
                 <%= item.timeEvent %>
+              </td>
+              <td>
+                <%= item.updatedBy %>
               </td>
             </tr>
           </form>
@@ -42,7 +48,9 @@
 
     </table>
 
+    <button type="button" onclick="location.href = '/savelist';" class="btn btn-dark">Save list</button>
     <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
+    <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic list</button>
 
   </div>
 

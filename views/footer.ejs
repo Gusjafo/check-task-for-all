@@ -5,16 +5,21 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  var socket = io();
+  let socket = io();
 
-  var pageImput = document.querySelectorAll('input');
+  let pageImput = document.querySelectorAll('input');
+  let tokenUser = document.cookie
+  .split('; ')
+  .find(row => row.startsWith('token='))
+  .split('=')[1];
+  // console.log(tokenUser);
 
   for (i of pageImput) {
     i.addEventListener('click', function (e) {
       e.preventDefault();
       if (true) {
         console.log("Saliendo desde host con " + this.value)
-        socket.emit('chat message', this.value);
+        socket.emit('chat message', this.value, tokenUser);
       }
     });
   }
@@ -31,8 +36,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
   integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
-  <script src="/public/script.js"></script>  
+  
 </body>
 
 </html>

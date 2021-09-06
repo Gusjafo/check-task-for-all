@@ -4,7 +4,8 @@ const itemsSchema = new mongoose.Schema({
     numberOfTask: Number,
     descriptionTask: String,
     checkbox: String,
-    timeEvent: String
+    timeEvent: String,
+    updatedBy: String
 });
 
 
