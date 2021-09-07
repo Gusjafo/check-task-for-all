@@ -19,10 +19,6 @@ app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(express.static("public"));
 app.use('/', routing);
 
-let itemsLocal = [];
-let actualUserToken = "";
-
-
 const Item = require("./model/item")
 
 const User = require("./model/user");
@@ -53,15 +49,10 @@ app.get('/redirect', (req, res) => {
         scopes: ["user.read"],
         redirectUri: "http://localhost:3000/redirect",
     };
-
-    let token_key = req.query.code;
-
-
-    console.log("CODE: " + tokenRequest.code);
     cca.acquireTokenByCode(tokenRequest).then((response) => {
-        let userkey = response.account.idTokenClaims.oid + "/" + response.account.idTokenClaims.tid;
-        console.log(userkey);
-        User.findOne({ key: userkey }, function (err, user) {
+        let oidUser = response.account.idTokenClaims.oid;
+        let tidUser = response.account.idTokenClaims.tid;
+        User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
             if (err) {
                 return handleError(err);
             } else {
@@ -74,18 +65,25 @@ app.get('/redirect', (req, res) => {
             const user = new User({
                 email: response.account.username,
                 name: response.account.name,
-                key: userkey,
+                key: {
+                    oid: oidUser,
+                    tid: tidUser
+                },
+                priority: 0
             });
             user.save(function (err) {
                 if (err) return handleError(err);
                 // saved!
             });
         };
-        actualUserToken = tokenRequest.code;
-        res
-            .status(200)
-            .cookie('token', response.idToken)
-            .redirect(301, '/inicio');
+        setTimeout(() => {
+            console.log("0.5 Segundo esperado");
+            res
+                .status(200)
+                .cookie('token', response.idToken)
+                .redirect(301, '/inicio');
+        }, 500);
+
     }).catch((error) => {
         console.log(error);
         res.status(500).send(error);
@@ -94,46 +92,53 @@ app.get('/redirect', (req, res) => {
 
 app.get('/inicio', auth, (req, res) => {
     let decoded = decodeToken(req);
-    let userKey = decoded.oid + "/" + decoded.tid;
-    User.findOne({ key: userKey }, function (err, user) {
+    let oidUser = decoded.oid;
+    let tidUser = decoded.tid;
+    User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
         if (err) {
+            console.log(err);
             return handleError(err);
         } else {
-            // console.log("inside /inicio ", user);
             if (user) {
                 Item.find({}, function (err, foundItems) {
-                    itemsLocal = foundItems;
-                    var dayToSend = actualDay();
-                    res.render("list", {
-                        listTitle: dayToSend,
-                        newListItems: foundItems,
-
-                    });
+                    if (err) {
+                        console.log(err);
+                        return handleError(err);
+                    } else {
+                        var dayToSend = actualDay();
+                        res.render("list", {
+                            listTitle: dayToSend,
+                            newListItems: foundItems,
+                        });
+                    }
                 });
             } else {
                 res.send("User don't identify")
             }
         }
     });
-    // Item.find({}, function (err, foundItems) {
-    //     itemsLocal = foundItems;
-    //     var dayToSend = actualDay();
-    //     res.render("list", {
-    //         listTitle: dayToSend,
-    //         newListItems: foundItems
-    //     });
-    // });
 })
 
 app.get("/update", auth, (req, res) => {
     let decoded = decodeToken(req);
-    if (decoded.preferred_username != process.env.ADMIN) {
-        return res.redirect(401, '/inicio');
-    }
-    var dayToSend = actualDay();
-    res.render("update", {
-        listTitle: dayToSend
-    });
+    let oidUser = decoded.oid;
+    let tidUser = decoded.tid;
+    User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+        if (err) {
+            console.log(err);
+            return handleError(err);
+        } else {
+            if (user.priority == process.env.ADMIN) {
+                var dayToSend = actualDay();
+                res.render("update", {
+                    listTitle: dayToSend
+                });
+            } else {
+                res
+                    .redirect(401, '/inicio');
+            }
+        }
+    })
 })
 
 app.post("/update", function (req, res) {
@@ -164,30 +169,28 @@ app.get('/historic', auth, (req, res) => {
 
 io.on('connection', (socket) => {
     socket.on('chat message', (msg, tokenUser) => {
-        // console.log("Llegando a servidor " + msg + tokenUser);
-
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
-
         let decoded = jwt.decode(tokenUser);
         let name = decoded.name;
-
-        itemsLocal.forEach(function (itemLocal) {
-            if (itemLocal._id == checkedItemId) {
-                itemLocal.checkbox == "checked" ? checked = "" : checked = "checked";
+        Item.findOne({ _id: checkedItemId }, function (err, item) {            
+            if (err) {
+                console.log(err);
+                return handleError(err);
+            } else {
+                item.checkbox == "checked" ? checked = "" : checked = "checked";
                 checked == "checked" ? timeToSend = timeToSend : timeToSend = "";
+                Item.findOneAndUpdate(
+                    { _id: checkedItemId },
+                    { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
+                    function (err) {
+                        if (!err) {
+                            console.log("Successfully updated checked item.");
+                        }
+                    });
             }
-        });
-
-        Item.findOneAndUpdate(
-            { _id: checkedItemId },
-            { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
-            function (err) {
-                if (!err) {
-                    console.log("Successfully updated checked item.");
-                }
-            });
+        })
         io.emit('chat message', msg);
     });
 });
@@ -203,14 +206,14 @@ function actualTime() {
 function actualDay() {
     var currentDay = new Date();
     var options = { weekday: "long", day: "numeric" };
-    var dayNow = currentDay.toLocaleDateString("es-ES", options);  
+    var dayNow = currentDay.toLocaleDateString("es-ES", options);
     return (dayNow);
 };
 
 function decodeToken(req) {
     const tokenReq =
-        req.headers.cookie["x-access-token"] || 
-        req.headers.cookie || 
+        req.headers.cookie["x-access-token"] ||
+        req.headers.cookie ||
         req.headers["x-access-token"];
     let token = tokenReq.split("=").pop();
     const decoded = jwt.decode(token);
