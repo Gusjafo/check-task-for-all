@@ -8,4 +8,10 @@ const itemsSchema = new mongoose.Schema({
     updatedBy: String
 });
 
-module.exports = mongoose.model("Item", itemsSchema);
+const historicSchema = new mongoose.Schema({
+    name: String,
+    savedBy: String,
+    tasks: [itemsSchema]
+});
+
+module.exports = mongoose.model('Historic', historicSchema);

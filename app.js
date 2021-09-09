@@ -19,9 +19,12 @@ app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(express.static("public"));
 app.use('/', routing);
 
-const Item = require("./model/item")
+const Item = require("./model/item");
+
+const Historic = require("./model/historic");
 
 const User = require("./model/user");
+
 
 const auth = require("./middleware/auth");
 
@@ -101,6 +104,7 @@ app.get('/inicio', auth, (req, res) => {
         } else {
             if (user) {
                 Item.find({}, function (err, foundItems) {
+                    // console.log(foundItems);
                     if (err) {
                         console.log(err);
                         return handleError(err);
@@ -111,7 +115,7 @@ app.get('/inicio', auth, (req, res) => {
                             newListItems: foundItems,
                         });
                     }
-                });
+                }).sort({ numberOfTask: 1 });
             } else {
                 res.send("User don't identify")
             }
@@ -134,33 +138,30 @@ app.get("/update", auth, (req, res) => {
                     listTitle: dayToSend
                 });
             } else {
-                res
-                    .redirect(401, '/inicio');
+                res.redirect(401, '/inicio');
             }
         }
     })
 })
 
-app.post("/update", function (req, res) {
-    var itemToAdd = req.body.inputDesc;
-    const item = new Item({
-        numberOfTask: 8,
-        descriptionTask: itemToAdd,
-        checkbox: "",
-        timeEvent: "",
-        updatedBy: ""
-    })
-
-    item.save(function (err) {
-        if (err) return handleError(err);
-        // saved!
-    });
-
-    res.redirect("/update");
-})
-
 app.get('/savelist', auth, (req, res) => {
-
+    let decoded = decodeToken(req);
+    let title = req.query.title;
+    Item.find({}, function (err, foundItems) {
+        if (err) {
+            console.log(err);
+            return handleError(err);
+        } else {
+            const historic = new Historic({
+                name: title,
+                savedBy: decoded.preferred_username,
+                tasks: foundItems
+            });
+            historic.save();
+            console.log("Succefully saved to historic")
+            res.redirect(200, '/inicio');
+        }
+    });
 })
 
 app.get('/historic', auth, (req, res) => {
@@ -168,13 +169,28 @@ app.get('/historic', auth, (req, res) => {
 })
 
 io.on('connection', (socket) => {
-    socket.on('chat message', (msg, tokenUser) => {
+    socket.on('update msg', (descNewTask, numberOfTask) => {
+        const item = new Item({
+            numberOfTask: numberOfTask,
+            descriptionTask: descNewTask,
+            checkbox: "",
+            timeEvent: "",
+            updatedBy: ""
+        });
+        item.save(function (err) {
+            if (err) return handleError(err);
+            // saved!
+        });
+        io.emit('update msg', 'Added new task');
+    });
+
+    socket.on('checkbox changed', (msg, tokenUser) => {
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
         let decoded = jwt.decode(tokenUser);
         let name = decoded.name;
-        Item.findOne({ _id: checkedItemId }, function (err, item) {            
+        Item.findOne({ _id: checkedItemId }, function (err, item) {
             if (err) {
                 console.log(err);
                 return handleError(err);
@@ -191,7 +207,7 @@ io.on('connection', (socket) => {
                     });
             }
         })
-        io.emit('chat message', msg);
+        io.emit('checkbox changed', msg);
     });
 });
 
@@ -218,6 +234,17 @@ function decodeToken(req) {
     let token = tokenReq.split("=").pop();
     const decoded = jwt.decode(token);
     return decoded;
+}
+
+function updateDuplicateTask(newNumberOfTask, idItemNewTask) {
+    Item.findOneAndUpdate(
+        { _id: checkedItemId },
+        { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
+        function (err) {
+            if (!err) {
+                console.log("Successfully updated checked item.");
+            }
+        });
 }
 
 

@@ -2,45 +2,12 @@
   Copyright 2021 GJF
 </footer>
 
-
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  let socket = io();
-
-  let pageImput = document.getElementById('sendData');
-  let descForm = document.getElementById('imputDesc');
-  let tokenUser = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('token='))
-    .split('=')[1];
-  // console.log(tokenUser);
-
-  pageImput.addEventListener('click', function (e) {
-    socket.emit('chat message', descForm.value, tokenUser);
-  });
-
-  // for (i of pageImput) {
-  //   i.addEventListener('click', function (e) {
-  //     e.preventDefault();
-  //     if (true) {
-  //       console.log("Saliendo desde host con " + this.value)
-  //       socket.emit('chat message', this.value, tokenUser);
-  //     }
-  //   });
-  // }
-
-  socket.on('chat message', function (msg) {
-    console.log("volviendo a host " + msg)
-    if (msg) {
-      location.reload();
-    }
-
-  });
-
+<script src="./script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous">
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-  integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
 </body>
 
