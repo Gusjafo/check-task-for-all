@@ -8,11 +8,8 @@ savelist.addEventListener('click', function () {
   let xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      location.reload();
+      window.alert("Base de datos guardada");
     }
-    setTimeout(() => {
-      windows.alert("Base de datos guardada");
-    }, 1000);
   };
   xhr.open("GET", "/savelist?title=" + title, true);
   xhr.send();

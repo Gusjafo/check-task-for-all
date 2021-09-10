@@ -2,8 +2,7 @@ require('dotenv').config();
 require("./config/database").connect();
 
 const express = require('express');
-const mongoose = require('mongoose');
-// const msal = require('@azure/msal-node');
+// const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const routing = require('./router/routing');
 const app = express();
@@ -25,12 +24,10 @@ const Historic = require("./model/historic");
 
 const User = require("./model/user");
 
-
 const auth = require("./middleware/auth");
 
 // Create msal application object
 const cca = require("./config/login");
-
 
 app.get('/', (req, res) => {
     const authCodeUrlParameters = {
@@ -124,6 +121,14 @@ app.get('/inicio', auth, (req, res) => {
 })
 
 app.get("/update", auth, (req, res) => {
+    let numberOfMaxTask = 0;
+    Item.find({}, function (err, foundMaxItem) {
+        if (err) {
+            console.log(err);
+            return handleError(err);
+        }
+        numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
+    }).sort({ numberOfTask: -1 }).limit(1);
     let decoded = decodeToken(req);
     let oidUser = decoded.oid;
     let tidUser = decoded.tid;
@@ -133,15 +138,34 @@ app.get("/update", auth, (req, res) => {
             return handleError(err);
         } else {
             if (user.priority == process.env.ADMIN) {
+                console.log(numberOfMaxTask);
                 var dayToSend = actualDay();
                 res.render("update", {
-                    listTitle: dayToSend
+                    listTitle: dayToSend,
+                    numberOfTask: numberOfMaxTask
                 });
             } else {
                 res.redirect(401, '/inicio');
             }
         }
     })
+})
+
+app.post("/update", auth, (req, res) => {
+    const item = new Item({
+        numberOfTask: req.body.inputTask,
+        descriptionTask: req.body.inputDesc,
+        checkbox: "",
+        timeEvent: "",
+        updatedBy: ""
+    });
+    item.save(function (err) {
+        if (err) return handleError(err);
+        // saved!
+    });
+    setTimeout(() => {
+     res.redirect("/update");
+    }, 200);
 })
 
 app.get('/savelist', auth, (req, res) => {
@@ -165,25 +189,10 @@ app.get('/savelist', auth, (req, res) => {
 })
 
 app.get('/historic', auth, (req, res) => {
-
 })
 
 io.on('connection', (socket) => {
-    socket.on('update msg', (descNewTask, numberOfTask) => {
-        const item = new Item({
-            numberOfTask: numberOfTask,
-            descriptionTask: descNewTask,
-            checkbox: "",
-            timeEvent: "",
-            updatedBy: ""
-        });
-        item.save(function (err) {
-            if (err) return handleError(err);
-            // saved!
-        });
-        io.emit('update msg', 'Added new task');
-    });
-
+  
     socket.on('checkbox changed', (msg, tokenUser) => {
         let checkedItemId = msg;
         let checked = "";
@@ -221,7 +230,7 @@ function actualTime() {
 
 function actualDay() {
     var currentDay = new Date();
-    var options = { weekday: "long", day: "numeric" };
+    var options = { weekday: "long", year: 'numeric', month: 'long', day: "numeric" };
     var dayNow = currentDay.toLocaleDateString("es-ES", options);
     return (dayNow);
 };
