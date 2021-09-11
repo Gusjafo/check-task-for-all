@@ -1,19 +1,6 @@
 let socket = io();
 
 let pageInput = document.querySelectorAll('input');
-let title = document.getElementsByTagName('h1')[0].innerText;
-let savelist = document.getElementById('savelist');
-
-savelist.addEventListener('click', function () {
-  let xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 200) {
-      window.alert("Base de datos guardada");
-    }
-  };
-  xhr.open("GET", "/savelist?title=" + title, true);
-  xhr.send();
-})
 
 let tokenUser = document.cookie
   .split('; ')
@@ -37,9 +24,3 @@ socket.on('checkbox changed', function (msg) {
     location.reload();
   }
 });
-
-socket.on('update msg', function (msg) {
-  if (msg) {
-    location.reload();
-  }
-})

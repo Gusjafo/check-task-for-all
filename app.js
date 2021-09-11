@@ -122,77 +122,120 @@ app.get('/inicio', auth, (req, res) => {
 
 app.get("/update", auth, (req, res) => {
     let numberOfMaxTask = 0;
-    Item.find({}, function (err, foundMaxItem) {
-        if (err) {
-            console.log(err);
-            return handleError(err);
-        }
-        numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
-    }).sort({ numberOfTask: -1 }).limit(1);
     let decoded = decodeToken(req);
-    let oidUser = decoded.oid;
-    let tidUser = decoded.tid;
-    User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-        if (err) {
-            console.log(err);
-            return handleError(err);
-        } else {
-            if (user.priority == process.env.ADMIN) {
-                console.log(numberOfMaxTask);
-                var dayToSend = actualDay();
-                res.render("update", {
-                    listTitle: dayToSend,
-                    numberOfTask: numberOfMaxTask
-                });
-            } else {
-                res.redirect(401, '/inicio');
+
+    Item.find({},
+        function (err, foundMaxItem) {
+            if (err) {
+                console.log(err);
+                return handleError(err);
             }
-        }
-    })
+            if (foundMaxItem[0].numberOfTask == undefined) {
+                numberOfMaxTask = 0;
+            } else {
+                numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
+            }            
+        }).sort({ numberOfTask: -1 }).limit(1);
+
+    User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
+        function (err, user) {
+            if (err) {
+                console.log(err);
+                return handleError(err);
+            } else {
+                if (user.priority == process.env.ADMIN) {
+                    var dayToSend = actualDay();
+                    res.render("update", {
+                        listTitle: dayToSend,
+                        numberOfTask: numberOfMaxTask
+                    });
+                } else {
+                    res.redirect(401, '/inicio');
+                }
+            }
+        })
 })
 
 app.post("/update", auth, (req, res) => {
     const item = new Item({
         numberOfTask: req.body.inputTask,
+        action: req.body.action,
+        op: req.body.encargado,
         descriptionTask: req.body.inputDesc,
         checkbox: "",
         timeEvent: "",
-        updatedBy: ""
+        updatedBy: "",
+        observation: ""
     });
-    item.save(function (err) {
-        if (err) return handleError(err);
+    item.save(function (err, result) {
+        if (err) {
+            return handleError(err);
+        } else {
+            console.log(result);
+            let taskAdded = result.numberOfTask;
+            let idTaskAdded = result._id;
+            Item.updateMany(
+                {
+                    $and: [{ numberOfTask: { $gte: taskAdded } },
+                    { _id: { $ne: idTaskAdded } }]
+                },
+                { $inc: { numberOfTask: 1 } },
+                { multi: true }, function (err) {
+                    if (err) {
+                        console.log(err);
+                        return handleError(err);
+                    }
+                });
+        }
         // saved!
     });
     setTimeout(() => {
-     res.redirect("/update");
-    }, 200);
+        res.redirect("/update");
+    }, 400);
 })
 
-app.get('/savelist', auth, (req, res) => {
+app.post('/savelist', auth, (req, res) => {
+    console.log(req.body.title);
+    let title = req.body.title;
     let decoded = decodeToken(req);
-    let title = req.query.title;
-    Item.find({}, function (err, foundItems) {
-        if (err) {
-            console.log(err);
-            return handleError(err);
-        } else {
-            const historic = new Historic({
-                name: title,
-                savedBy: decoded.preferred_username,
-                tasks: foundItems
-            });
-            historic.save();
-            console.log("Succefully saved to historic")
-            res.redirect(200, '/inicio');
-        }
-    });
+
+    User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
+        function (err, user) {
+            if (err) {
+                console.log(err);
+                return handleError(err);
+            } else {
+                if (user.priority == process.env.ADMIN) {
+                    Item.find({},
+                        function (err, foundItems) {
+                            if (err) {
+                                console.log(err);
+                                return handleError(err);
+                            } else {
+                                const historic = new Historic({
+                                    date: title,
+                                    savedBy: decoded.preferred_username,
+                                    tasks: foundItems
+                                });
+                                historic.save();
+                                console.log("Successfully saved to historic");
+                                res.redirect(200, '/inicio');
+                            }
+                        });
+
+                } else {
+                    res.redirect(401, '/inicio');
+                }
+            }
+        });
 })
 
 app.get('/historic', auth, (req, res) => {
+    
 })
 
 io.on('connection', (socket) => {
-  
+
     socket.on('checkbox changed', (msg, tokenUser) => {
         let checkedItemId = msg;
         let checked = "";

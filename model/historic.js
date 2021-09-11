@@ -2,14 +2,17 @@ const mongoose = require("mongoose");
 
 const itemsSchema = new mongoose.Schema({
     numberOfTask: Number,
+    action: String,
+    op: String,
     descriptionTask: String,
     checkbox: String,
     timeEvent: String,
-    updatedBy: String
+    updatedBy: String,
+    observation: String
 });
 
 const historicSchema = new mongoose.Schema({
-    name: String,
+    date: String,
     savedBy: String,
     tasks: [itemsSchema]
 });

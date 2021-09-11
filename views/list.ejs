@@ -27,6 +27,12 @@
               <td>
                 <%= item.numberOfTask %>
               </td>
+              <td>
+                <%= item.action %>
+              </td>
+              <td>
+                <%= item.op %>
+              </td>
               <td class="text-start">
                 <%= item.descriptionTask %>
               </td>
@@ -41,6 +47,9 @@
               <td>
                 <%= item.updatedBy %>
               </td>
+              <td>
+                <%= item.observation %>
+              </td>
             </tr>
           </form>
           <% }) %>
@@ -48,10 +57,14 @@
 
     </table>
 
-    <!-- <button type="button" id="savelist" onclick="location.href = '/savelist';" class="btn btn-dark">Save list</button> -->
-    <button type="button" id="savelist" class="btn btn-dark">Save list</button>
-    <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
-    <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic list</button>
+    <div>
+      <form action="/savelist" method="POST">
+        <input type="hidden" name="title" value="<%= listTitle %>">
+        <button type="submit" id="savelist" class="btn btn-dark">Save list</button>
+      </form>
+      <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
+      <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic list</button>
+    </div>
 
   </div>
 
