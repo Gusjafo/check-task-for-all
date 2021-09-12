@@ -2,14 +2,11 @@ require('dotenv').config();
 require("./config/database").connect();
 
 const express = require('express');
-// const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const routing = require('./router/routing');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
-
-
 
 const port = process.env.PORT || 3000;
 
@@ -107,7 +104,7 @@ app.get('/inicio', auth, (req, res) => {
                         return handleError(err);
                     } else {
                         var dayToSend = actualDay();
-                        res.render("list", {
+                        res.render("list copy", {
                             listTitle: dayToSend,
                             newListItems: foundItems,
                         });
@@ -134,7 +131,7 @@ app.get("/update", auth, (req, res) => {
                 numberOfMaxTask = 0;
             } else {
                 numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
-            }            
+            }
         }).sort({ numberOfTask: -1 }).limit(1);
 
     User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
@@ -231,12 +228,13 @@ app.post('/savelist', auth, (req, res) => {
 })
 
 app.get('/historic', auth, (req, res) => {
-    
+
 })
 
 io.on('connection', (socket) => {
 
-    socket.on('checkbox changed', (msg, tokenUser) => {
+    socket.on('checkbox changed', (msg, obsField, tokenUser) => {
+        console.log( msg + " " + obsField + " ")
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
@@ -251,7 +249,12 @@ io.on('connection', (socket) => {
                 checked == "checked" ? timeToSend = timeToSend : timeToSend = "";
                 Item.findOneAndUpdate(
                     { _id: checkedItemId },
-                    { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
+                    {
+                        checkbox: checked,
+                        timeEvent: timeToSend,
+                        updatedBy: name,
+                        observation: obsField
+                    },
                     function (err) {
                         if (!err) {
                             console.log("Successfully updated checked item.");
@@ -259,7 +262,9 @@ io.on('connection', (socket) => {
                     });
             }
         })
-        io.emit('checkbox changed', msg);
+        setTimeout(() => {
+            io.emit('checkbox changed', msg);
+        }, 400);
     });
 });
 
@@ -288,16 +293,16 @@ function decodeToken(req) {
     return decoded;
 }
 
-function updateDuplicateTask(newNumberOfTask, idItemNewTask) {
-    Item.findOneAndUpdate(
-        { _id: checkedItemId },
-        { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
-        function (err) {
-            if (!err) {
-                console.log("Successfully updated checked item.");
-            }
-        });
-}
+// function updateDuplicateTask(newNumberOfTask, idItemNewTask) {
+//     Item.findOneAndUpdate(
+//         { _id: checkedItemId },
+//         { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
+//         function (err) {
+//             if (!err) {
+//                 console.log("Successfully updated checked item.");
+//             }
+//         });        
+// }
 
 
 http.listen(port, () => {

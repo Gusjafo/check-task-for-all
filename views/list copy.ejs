@@ -1,0 +1,67 @@
+<%- include("header") -%>
+
+  <div class="container p-3">
+
+    <div class="py-4 text-uppercase" id="heading">
+      <h1 class="">
+        <%= listTitle %>
+      </h1>
+    </div>
+
+    <hr class="my-2">
+    </hr>
+    <% newListItems.forEach(function(item){ %>
+      <div class="row mb-4">
+        <div class="col-1 fs-4">
+          <%= item.numberOfTask %>.
+        </div>
+        <div class="col-8 fs-4 text-start">
+          <%= item.descriptionTask %>
+        </div>
+        <div class="col-3 overflow-hidden text-end">
+          <%= item.action %> <br>
+            <hr class="my-2">
+            <%= item.op %>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-4 btn-group btn-group-lg">
+          <input type="checkbox" class="btn-check checkbox" name="checkbox" id="<%=item._id%>" value="<%=item._id%>"
+            <%=item.checkbox %> autocomplete="off">
+          <label class="btn btn-outline-primary" for="<%=item._id%>">Check</label>
+        </div>
+        <div class="col-3 text-center">
+          <%= item.timeEvent %>
+            <br>
+            <hr class="my-2">
+            <%= item.updatedBy %>
+        </div>
+        <div class="col-5 text-end">
+          <div class="form-floating">
+          <!-- <input type="text" class="form-control obs" id="floatingInputValue" placeholder=""
+            value="<%= item.observation %>">
+          <label for="floatingInputValue"></label> -->
+          <textarea class="form-control obs" placeholder="Leave a comment here" id="floatingTextarea"
+            style="height: 100px"><%= item.observation %></textarea>
+          <label for="floatingTextarea">Observaciones</label>
+          <!-- <label for="obs">
+            <textarea name="text" class="obs form-control text-center" id="obs" style="height: 100%; width: 100%"><%= item.observation %>
+              </textarea>
+          </label> -->
+        </div>
+        </div>
+      </div>
+      <hr class="my-4">
+      </hr>
+      <% }); %>
+
+        <div>
+          <form action="/savelist" method="POST">
+            <input type="hidden" name="title" value="<%= listTitle %>">
+            <button type="submit" id="savelist" class="btn btn-dark">Save list</button>
+          </form>
+          <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
+          <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic list</button>
+        </div>
+
+        <%- include("footer") -%>

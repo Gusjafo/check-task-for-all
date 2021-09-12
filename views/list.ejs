@@ -7,55 +7,61 @@
         <%= listTitle %>
       </h1>
     </div>
+    <div class="table-responsive">
+      <table class="table table-striped mb-5">
 
-    <table class="table table-striped mb-5">
+        <thead class="">
+          <tr>
+            <th>Tarea</th>
+            <th>Acción</th>
+            <th>OP</th>
+            <th>Descripción</th>
+            <th>Realizado</th>
+            <th>Hora</th>
+            <th>UpdatedBy</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
 
-      <thead class="">
-        <tr>
-          <th>Tarea</th>
-          <th>Descripción</th>
-          <th>Realizado</th>
-          <th>Hora</th>
-          <th>UpdatedBy</th>
-        </tr>
-      </thead>
-
-      <tbody class="align-middle">
-        <% newListItems.forEach(function(item){ %>
-          <form action="">
-            <tr>
-              <td>
-                <%= item.numberOfTask %>
-              </td>
-              <td>
-                <%= item.action %>
-              </td>
-              <td>
-                <%= item.op %>
-              </td>
-              <td class="text-start">
-                <%= item.descriptionTask %>
-              </td>
-              <td>
-                <label for="checkbox">
-                  <input type="checkbox" name="checkbox" value="<%=item._id%>" <%=item.checkbox %> autocomplete="off">
-                </label>
-              </td>
-              <td>
-                <%= item.timeEvent %>
-              </td>
-              <td>
-                <%= item.updatedBy %>
-              </td>
-              <td>
-                <%= item.observation %>
-              </td>
-            </tr>
-          </form>
-          <% }) %>
-      </tbody>
-
-    </table>
+        <tbody class="align-middle">
+          <% newListItems.forEach(function(item){ %>
+            <form action="">
+              <tr>
+                <td>
+                  <%= item.numberOfTask %>
+                </td>
+                <td>
+                  <%= item.action %>
+                </td>
+                <td>
+                  <%= item.op %>
+                </td>
+                <td class="text-start">
+                  <%= item.descriptionTask %>
+                </td>
+                <td>
+                  <label for="checkbox">
+                    <input type="checkbox" class="form-check-input me-1" name="checkbox" value="<%=item._id%>" <%=item.checkbox %> autocomplete="off">
+                  </label>
+                </td>
+                <td>
+                  <%= item.timeEvent %>
+                </td>
+                <td>
+                  <%= item.updatedBy %>
+                </td>
+                <td>
+                  <label for="obs">
+                    <textarea name="text" class="obs" id="obs" cols="8" rows="2"><%= item.observation %></textarea>
+                    <!-- <input type="text" name="desc" value="<%= item.observation %>" autocomplete="off"> -->
+                  </label>
+                </td>
+              </tr>
+            </form>
+            <% }) %>
+        </tbody>
+      </table>
+    </div>
 
     <div>
       <form action="/savelist" method="POST">
