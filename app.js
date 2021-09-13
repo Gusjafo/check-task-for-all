@@ -29,7 +29,7 @@ const cca = require("./config/login");
 app.get('/', (req, res) => {
     const authCodeUrlParameters = {
         scopes: ["user.read"],
-        redirectUri: "http://localhost:3000/redirect",
+        redirectUri: `${process.env.REDIRECT}`,
     };
 
     // get url to sign user in and consent to scopes needed for application
@@ -44,7 +44,7 @@ app.get('/redirect', (req, res) => {
     const tokenRequest = {
         code: req.query.code,
         scopes: ["user.read"],
-        redirectUri: "http://localhost:3000/redirect",
+        redirectUri: `${process.env.REDIRECT}`,
     };
     cca.acquireTokenByCode(tokenRequest).then((response) => {
         let oidUser = response.account.idTokenClaims.oid;
