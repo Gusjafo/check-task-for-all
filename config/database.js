@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const MONGO_URI =
   `mongodb+srv://${process.env.USER}:${process.env.PSW}@sandbox.lafax.mongodb.net/${process.env.DBNAME}?retryWrites=true&w=majority`;
-
+  
 exports.connect = () => {
   // Connecting to the database
   mongoose

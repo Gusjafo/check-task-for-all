@@ -1,6 +1,6 @@
 <%- include("header") -%>
 
-  <div class="container p-3">
+  <div class="container px-4 py-2 font-monospace">
 
     <div class="py-4 text-uppercase" id="heading">
       <h1 class="">
@@ -8,50 +8,44 @@
       </h1>
     </div>
 
-    <hr class="my-2">
+    <hr class="py-1">
     </hr>
     <% newListItems.forEach(function(item){ %>
-      <div class="row mb-4">
-        <div class="col-1 fs-4">
-          <%= item.numberOfTask %>.
+      <div class="row">
+        <div class="col-10 fs-6 fw-bold text-start me-0 pe-0">
+          <%= item.numberOfTask %>
+            <%= item.descriptionTask %>
         </div>
-        <div class="col-8 fs-4 text-start">
-          <%= item.descriptionTask %>
-        </div>
-        <div class="col-3 overflow-hidden text-end">
+        <div class="col-2 overflow-hidden text-end pe-2" style="font-size: small;">
           <%= item.action %> <br>
-            <hr class="my-2">
+            <hr class="m-1 me-0">
             <%= item.op %>
         </div>
       </div>
-      <div class="row mb-2">
-        <div class="col-4 btn-group btn-group-lg">
+      <div class="row">
+        <div class="col-4 btn-group btn-group-lg p-2">
           <input type="checkbox" class="btn-check checkbox" name="checkbox" id="<%=item._id%>" value="<%=item._id%>"
             <%=item.checkbox %> autocomplete="off">
           <label class="btn btn-outline-primary" for="<%=item._id%>">Check</label>
         </div>
-        <div class="col-3 text-center">
+        <div class="col-3 text-center mt-2">
           <%= item.timeEvent %>
             <br>
-            <hr class="my-2">
-            <%= item.updatedBy %>
+            <hr class="m-1">
+            <div style="font-size: small;">
+              <%= item.updatedBy %>
+            </div>
         </div>
-        <div class="col-5 text-end">
+        <div class="col-5 p-1 ps-0">
           <div class="form-floating">
-          <!-- <input type="text" class="form-control obs" id="floatingInputValue" placeholder=""
-            value="<%= item.observation %>">
-          <label for="floatingInputValue"></label> -->
-          <textarea class="form-control obs" placeholder="Leave a comment here" id="floatingTextarea"
-            style="height: 100px"><%= item.observation %></textarea>
-          <label for="floatingTextarea">Observaciones</label>
-          <!-- <label for="obs">
-            <textarea name="text" class="obs form-control text-center" id="obs" style="height: 100%; width: 100%"><%= item.observation %>
-              </textarea>
-          </label> -->
-        </div>
+            <textarea class="form-control obs m-1 p-1" id="floatingTextarea">
+            <%= item.observation %>
+          </textarea>
+            <label for="floatingTextarea"></label>
+          </div>
         </div>
       </div>
-      <hr class="my-4">
+      <hr class="my-2 py-1">
       </hr>
       <% }); %>
 
