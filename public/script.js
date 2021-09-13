@@ -14,12 +14,11 @@ for (i of obsField) {
   });
 }
 
-
 document.querySelectorAll("input[name=checkbox]").forEach(element =>
   element.addEventListener('change', selectedInput))
-
+ 
 function selectedInput() {
-  obsTextString = obsTextArray.join("");
+  let obsTextString = obsTextArray.join("");
   obsTextArray = [];
   console.log("Saliendo desde host con " + this.value);
   console.log("Saliendo desde host con " + obsTextString);
