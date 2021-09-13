@@ -104,7 +104,7 @@ app.get('/inicio', auth, (req, res) => {
                         return handleError(err);
                     } else {
                         var dayToSend = actualDay();
-                        res.render("list copy", {
+                        res.render("list", {
                             listTitle: dayToSend,
                             newListItems: foundItems,
                         });

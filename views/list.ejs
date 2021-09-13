@@ -1,77 +1,61 @@
 <%- include("header") -%>
 
-  <div class="container py-2 text-center">
+  <div class="container px-4 py-2 font-monospace">
 
     <div class="py-4 text-uppercase" id="heading">
       <h1 class="">
         <%= listTitle %>
       </h1>
     </div>
-    <div class="table-responsive">
-      <table class="table table-striped mb-5">
 
-        <thead class="">
-          <tr>
-            <th>Tarea</th>
-            <th>Acción</th>
-            <th>OP</th>
-            <th>Descripción</th>
-            <th>Realizado</th>
-            <th>Hora</th>
-            <th>UpdatedBy</th>
-            <th>Observaciones</th>
-          </tr>
-        </thead>
+    <hr class="py-1">
+    </hr>
+    <% newListItems.forEach(function(item){ %>
+      <div class="row">
+        <div class="col-10 fs-6 fw-bold text-start me-0 pe-0">
+          <%= item.numberOfTask %>
+            <%= item.descriptionTask %>
+        </div>
+        <div class="col-2 overflow-hidden text-end pe-2" style="font-size: small;">
+          <%= item.action %> <br>
+            <hr class="m-1 me-0">
+            <%= item.op %>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4 btn-group btn-group-lg p-2">
+          <input type="checkbox" class="btn-check checkbox" name="checkbox" id="<%=item._id%>" value="<%=item._id%>"
+            <%=item.checkbox %> autocomplete="off">
+          <label class="btn btn-outline-primary" for="<%=item._id%>">Check</label>
+        </div>
+        <div class="col-3 text-center mt-2">
+          <%= item.timeEvent %>
+            <br>
+            <hr class="m-1">
+            <div style="font-size: small;">
+              <%= item.updatedBy %>
+            </div>
+        </div>
+        <div class="col-5 p-1 ps-0">
+          <div class="form-floating">
+            <textarea class="form-control obs m-1 p-1" id="floatingTextarea">
+            <%= item.observation %>
+          </textarea>
+            <label for="floatingTextarea"></label>
+          </div>
+        </div>
+      </div>
+      <hr class="my-2 py-1">
+      </hr>
+      <% }); %>
 
-        <tbody class="align-middle">
-          <% newListItems.forEach(function(item){ %>
-            <form action="">
-              <tr>
-                <td>
-                  <%= item.numberOfTask %>
-                </td>
-                <td>
-                  <%= item.action %>
-                </td>
-                <td>
-                  <%= item.op %>
-                </td>
-                <td class="text-start">
-                  <%= item.descriptionTask %>
-                </td>
-                <td>
-                  <label for="checkbox">
-                    <input type="checkbox" class="form-check-input me-1" name="checkbox" value="<%=item._id%>" <%=item.checkbox %> autocomplete="off">
-                  </label>
-                </td>
-                <td>
-                  <%= item.timeEvent %>
-                </td>
-                <td>
-                  <%= item.updatedBy %>
-                </td>
-                <td>
-                  <label for="obs">
-                    <textarea name="text" class="obs" id="obs" cols="8" rows="2"><%= item.observation %></textarea>
-                    <!-- <input type="text" name="desc" value="<%= item.observation %>" autocomplete="off"> -->
-                  </label>
-                </td>
-              </tr>
-            </form>
-            <% }) %>
-        </tbody>
-      </table>
-    </div>
+        <div>
+          <form action="/savelist" method="POST">
+            <input type="hidden" name="title" value="<%= listTitle %>">
+            <button type="submit" id="savelist" class="btn btn-dark">Save list</button>
+          </form>
+          <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
+          <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic list</button>
+        </div>
 
-    <div>
-      <form action="/savelist" method="POST">
-        <input type="hidden" name="title" value="<%= listTitle %>">
-        <button type="submit" id="savelist" class="btn btn-dark">Save list</button>
-      </form>
-      <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
-      <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic list</button>
-    </div>
-
-  </div>
-
-  <%- include("footer") -%>
+        <%- include("footer") -%>
