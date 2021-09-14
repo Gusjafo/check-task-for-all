@@ -53,6 +53,7 @@ app.get('/redirect', (req, res) => {
             if (err) {
                 return handleError(err);
             } else {
+                console.log(userName);
                 if (user === null) {
                     addNewUser(response);
                 }
@@ -182,7 +183,8 @@ app.post("/update", auth, (req, res) => {
                         console.log(err);
                         return handleError(err);
                     }
-                });
+                }
+            );
         }
         // saved!
     });
@@ -202,7 +204,7 @@ app.post('/savelist', auth, (req, res) => {
                 console.log(err);
                 return handleError(err);
             } else {
-                if (user.priority == process.env.ADMIN) {
+                if (user.priority == process.env.ADMIN || user.priority == process.env.USUARIO) {
                     Item.find({},
                         function (err, foundItems) {
                             if (err) {
@@ -216,15 +218,20 @@ app.post('/savelist', auth, (req, res) => {
                                 });
                                 historic.save();
                                 console.log("Successfully saved to historic");
-                                res.redirect(200, '/inicio');
+                                setTimeout(() => {
+                                    cleanMainList();
+                                    res.redirect(200, '/inicio');
+                                }, 500);
                             }
-                        });
+                        }
+                    );
 
                 } else {
                     res.redirect(401, '/inicio');
                 }
             }
-        });
+        }
+    );
 })
 
 // The displayWarning() function presents a notification of a problem.
@@ -238,12 +245,14 @@ app.get('/historic', auth, (req, res) => {
 io.on('connection', (socket) => {
 
     socket.on('checkbox changed', (msg, obsField, tokenUser) => {
-        console.log( msg + " " + obsField + " ")
+        console.log(msg + " " + obsField + " ");
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
         let decoded = jwt.decode(tokenUser);
-        let name = decoded.name;
+        let name = decoded.preferred_username;        
+        let index = name.indexOf("@");
+        let userName = name.substring(0, index);        
         Item.findOne({ _id: checkedItemId }, function (err, item) {
             if (err) {
                 console.log(err);
@@ -256,17 +265,19 @@ io.on('connection', (socket) => {
                     {
                         checkbox: checked,
                         timeEvent: timeToSend,
-                        updatedBy: name,
+                        updatedBy: userName,
                         observation: obsField
                     },
                     function (err) {
                         if (!err) {
                             console.log("Successfully updated checked item.");
                         }
-                    });
+                    }
+                );
             }
         })
         setTimeout(() => {
+            console.log("volviendo");
             io.emit('checkbox changed', msg);
         }, 400);
     });
@@ -295,6 +306,22 @@ function decodeToken(req) {
     let token = tokenReq.split("=").pop();
     const decoded = jwt.decode(token);
     return decoded;
+}
+
+function cleanMainList() {
+    Item.updateMany({},
+        { $set: { checkbox: "", timeEvent: "", updatedBy: "", observation: "" } },
+        { upsert: false },
+        function (err, foundItems) {
+            console.log(foundItems.n + " Items cleaned!");
+            if (err) {
+                console.log(err);
+                return handleError(err);
+            }
+        }
+    );
+    console.log("List cleaned");
+    return;
 }
 
 // function updateDuplicateTask(newNumberOfTask, idItemNewTask) {
