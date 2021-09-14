@@ -24,7 +24,7 @@ function selectedInput() {
   obsTextArray = [];
   console.log("Saliendo desde host con " + this.value);
   console.log("Saliendo desde host con " + obsTextString);
-  // socket.emit('checkbox changed', this.value, obsTextString, tokenUser);
+  socket.emit('checkbox changed', this.value, obsTextString, tokenUser);
 }
 
 socket.on('checkbox changed', function (msg) {
