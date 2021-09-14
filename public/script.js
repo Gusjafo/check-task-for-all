@@ -12,13 +12,15 @@ for (i of obsField) {
   i.addEventListener('input', (e) => {
     e.preventDefault()
     obsTextArray.push(e.data);
+    console.log(obsTextArray);
   });
 }
 
 document.querySelectorAll("input[name=checkbox]").forEach(element =>
-  element.addEventListener('change', selectedInput))
+  element.addEventListener('input', selectedInput))
  
 function selectedInput() {  
+  console.log(obsTextArray);
   obsTextString = obsTextArray.join("");
   console.log(typeof obsTextString);
   obsTextArray = [];
