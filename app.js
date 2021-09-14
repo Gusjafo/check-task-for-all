@@ -227,6 +227,10 @@ app.post('/savelist', auth, (req, res) => {
         });
 })
 
+// The displayWarning() function presents a notification of a problem.
+// https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault
+
+
 app.get('/historic', auth, (req, res) => {
 
 })

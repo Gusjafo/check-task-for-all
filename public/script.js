@@ -10,6 +10,7 @@ let tokenUser = document.cookie
 
 for (i of obsField) {
   i.addEventListener('input', (e) => {
+    e.preventDefault()
     obsTextArray.push(e.data);
   });
 }
@@ -17,12 +18,13 @@ for (i of obsField) {
 document.querySelectorAll("input[name=checkbox]").forEach(element =>
   element.addEventListener('change', selectedInput))
  
-function selectedInput() {
-  let obsTextString = obsTextArray.join("");
+function selectedInput() {  
+  obsTextString = obsTextArray.join("");
+  console.log(typeof obsTextString);
   obsTextArray = [];
   console.log("Saliendo desde host con " + this.value);
   console.log("Saliendo desde host con " + obsTextString);
-  socket.emit('checkbox changed', this.value, obsTextString, tokenUser);
+  // socket.emit('checkbox changed', this.value, obsTextString, tokenUser);
 }
 
 socket.on('checkbox changed', function (msg) {
