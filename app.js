@@ -53,7 +53,6 @@ app.get('/redirect', (req, res) => {
             if (err) {
                 return handleError(err);
             } else {
-                console.log(userName);
                 if (user === null) {
                     addNewUser(response);
                 }
