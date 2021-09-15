@@ -23,6 +23,8 @@ const User = require("./model/user");
 
 const auth = require("./middleware/auth");
 
+const unitRun = "";
+
 // Create msal application object
 const cca = require("./config/login");
 
@@ -34,13 +36,11 @@ app.get('/', (req, res) => {
 
     // get url to sign user in and consent to scopes needed for application
     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-        // console.log("PRIMERO: ", response);
         res.redirect(response);
     }).catch((error) => console.log(JSON.stringify(error)));
 });
 
 app.get('/redirect', (req, res) => {
-    // console.log("req:", req);
     const tokenRequest = {
         code: req.query.code,
         scopes: ["user.read"],
@@ -74,11 +74,10 @@ app.get('/redirect', (req, res) => {
             });
         };
         setTimeout(() => {
-            console.log("0.5 Segundo esperado");
             res
                 .status(200)
                 .cookie('token', response.idToken)
-                .redirect(301, '/inicio');
+                .redirect(301, '/preinicio');
         }, 500);
 
     }).catch((error) => {
@@ -86,6 +85,50 @@ app.get('/redirect', (req, res) => {
         res.status(500).send(error);
     });
 });
+
+app.get('/preinicio', auth, (req, res) => {
+    if (unitRun == "") {
+        let decoded = decodeToken(req);
+        let oidUser = decoded.oid;
+        let tidUser = decoded.tid;
+        User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+            if (err) {
+                console.log(err);
+                return handleError(err);
+            } else {
+                if (user.priority == 0) {
+                    res
+                        .status(200)
+                        .redirect(301, '/inicio');
+                } else {
+                    // enviar pagina a usuario para determinar U29, U30 o historial
+                    // var options = {'root':<your_root_directory>};
+                    res.sendFile( __dirname + '/public/preinicio.html', function (err) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            console.log('Sent')
+                        }
+                    }
+                    );
+                }
+            }
+        });
+    } else {
+        res
+            .status(200)
+            .redirect(301, '/inicio');
+    }
+});
+
+app.post('/preinicio', auth, (req, res) => {
+    // guardar si es U29 o U30 
+    // redireccionar a inicio o a historial
+    console.log(req);
+    res
+        .status(200)
+        .redirect(301, '/inicio');
+})
 
 app.get('/inicio', auth, (req, res) => {
     let decoded = decodeToken(req);
@@ -98,7 +141,6 @@ app.get('/inicio', auth, (req, res) => {
         } else {
             if (user) {
                 Item.find({}, function (err, foundItems) {
-                    // console.log(foundItems);
                     if (err) {
                         console.log(err);
                         return handleError(err);
@@ -211,6 +253,7 @@ app.post('/savelist', auth, (req, res) => {
                                 return handleError(err);
                             } else {
                                 const historic = new Historic({
+                                    unit: unitRun,
                                     date: title,
                                     savedBy: decoded.preferred_username,
                                     tasks: foundItems
@@ -249,9 +292,9 @@ io.on('connection', (socket) => {
         let checked = "";
         let timeToSend = actualTime();
         let decoded = jwt.decode(tokenUser);
-        let name = decoded.preferred_username;        
+        let name = decoded.preferred_username;
         let index = name.indexOf("@");
-        let userName = name.substring(0, index);        
+        let userName = name.substring(0, index);
         Item.findOne({ _id: checkedItemId }, function (err, item) {
             if (err) {
                 console.log(err);
@@ -322,17 +365,6 @@ function cleanMainList() {
     console.log("List cleaned");
     return;
 }
-
-// function updateDuplicateTask(newNumberOfTask, idItemNewTask) {
-//     Item.findOneAndUpdate(
-//         { _id: checkedItemId },
-//         { checkbox: checked, timeEvent: timeToSend, updatedBy: name },
-//         function (err) {
-//             if (!err) {
-//                 console.log("Successfully updated checked item.");
-//             }
-//         });        
-// }
 
 
 http.listen(port, () => {

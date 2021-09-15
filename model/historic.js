@@ -12,6 +12,7 @@ const itemsSchema = new mongoose.Schema({
 });
 
 const historicSchema = new mongoose.Schema({
+    unit: String,
     date: String,
     savedBy: String,
     tasks: [itemsSchema]
