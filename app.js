@@ -16,14 +16,10 @@ app.use(express.static("public"));
 app.use('/', routing);
 
 const Item = require("./model/item");
-
 const Historic = require("./model/historic");
-
 const User = require("./model/user");
-
 const auth = require("./middleware/auth");
-
-const unitRun = "";
+let unitRun = "";
 
 // Create msal application object
 const cca = require("./config/login");
@@ -50,6 +46,7 @@ app.get('/redirect', (req, res) => {
         let oidUser = response.account.idTokenClaims.oid;
         let tidUser = response.account.idTokenClaims.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+            console.log('/redirect ', user);
             if (err) {
                 return handleError(err);
             } else {
@@ -77,9 +74,8 @@ app.get('/redirect', (req, res) => {
             res
                 .status(200)
                 .cookie('token', response.idToken)
-                .redirect(301, '/preinicio');
+                .redirect('/preinicio');
         }, 500);
-
     }).catch((error) => {
         console.log(error);
         res.status(500).send(error);
@@ -87,23 +83,24 @@ app.get('/redirect', (req, res) => {
 });
 
 app.get('/preinicio', auth, (req, res) => {
+    console.log('en preinicio: ' + unitRun);
     if (unitRun == "") {
         let decoded = decodeToken(req);
         let oidUser = decoded.oid;
         let tidUser = decoded.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+            console.log(user);
             if (err) {
                 console.log(err);
                 return handleError(err);
             } else {
+                console.log(user.priority);
                 if (user.priority == 0) {
                     res
                         .status(200)
-                        .redirect(301, '/inicio');
+                        .redirect(302, '/inicio');
                 } else {
-                    // enviar pagina a usuario para determinar U29, U30 o historial
-                    // var options = {'root':<your_root_directory>};
-                    res.sendFile( __dirname + '/public/preinicio.html', function (err) {
+                    res.sendFile(__dirname + '/public/preinicio.html', function (err) {
                         if (err) {
                             console.log(err);
                         } else {
@@ -115,19 +112,27 @@ app.get('/preinicio', auth, (req, res) => {
             }
         });
     } else {
+        console.log("hacia inicio");
         res
             .status(200)
-            .redirect(301, '/inicio');
+            .redirect(302, '/inicio');
     }
 });
 
 app.post('/preinicio', auth, (req, res) => {
     // guardar si es U29 o U30 
     // redireccionar a inicio o a historial
-    console.log(req);
-    res
-        .status(200)
-        .redirect(301, '/inicio');
+    console.log(req.body.firstChoice);
+    unitRun = req.body.firstChoice;
+    if (unitRun == 'U 29' || unitRun == 'U 30' ) {
+        res
+            .status(200)
+            .redirect(301, '/inicio');
+    } else {
+        res
+            .status(200)
+            .redirect(301, '/historic');
+    }
 })
 
 app.get('/inicio', auth, (req, res) => {
@@ -145,9 +150,11 @@ app.get('/inicio', auth, (req, res) => {
                         console.log(err);
                         return handleError(err);
                     } else {
-                        var dayToSend = actualDay();
+                        let dayToSend = actualDay();
+                        let index = dayToSend.indexOf(',');
+                        let dayShortToSend = dayToSend.substring(0, (index + 4));
                         res.render("list", {
-                            listTitle: dayToSend,
+                            listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
                             newListItems: foundItems,
                         });
                     }
@@ -183,9 +190,11 @@ app.get("/update", auth, (req, res) => {
                 return handleError(err);
             } else {
                 if (user.priority == process.env.ADMIN) {
-                    var dayToSend = actualDay();
+                    let dayToSend = actualDay();
+                    let index = dayToSend.indexOf(',');
+                    let dayShortToSend = dayToSend.substring(0, (index + 4));
                     res.render("update", {
-                        listTitle: dayToSend,
+                        listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
                         numberOfTask: numberOfMaxTask
                     });
                 } else {
@@ -234,11 +243,9 @@ app.post("/update", auth, (req, res) => {
     }, 400);
 })
 
-app.post('/savelist', auth, (req, res) => {
-    console.log(req.body.title);
-    let title = req.body.title;
+app.get('/savelist', auth, (req, res) => {
+    let dayToSend = actualDay();
     let decoded = decodeToken(req);
-
     User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
         function (err, user) {
             if (err) {
@@ -254,15 +261,16 @@ app.post('/savelist', auth, (req, res) => {
                             } else {
                                 const historic = new Historic({
                                     unit: unitRun,
-                                    date: title,
+                                    date: dayToSend,
                                     savedBy: decoded.preferred_username,
                                     tasks: foundItems
                                 });
                                 historic.save();
                                 console.log("Successfully saved to historic");
-                                setTimeout(() => {
+                                unitRun = "";
+                                setTimeout(() => {                                    
                                     cleanMainList();
-                                    res.redirect(200, '/inicio');
+                                    res.redirect(302, '/preinicio');
                                 }, 500);
                             }
                         }
@@ -281,7 +289,7 @@ app.post('/savelist', auth, (req, res) => {
 
 
 app.get('/historic', auth, (req, res) => {
-
+    res.send('Estamos trabajando en ello');
 })
 
 io.on('connection', (socket) => {
@@ -326,17 +334,17 @@ io.on('connection', (socket) => {
 });
 
 function actualTime() {
-    var currentTime = new Date();
-    var hourNow = currentTime.getHours();
-    var minuteNow = currentTime.getMinutes();
-    var timeNow = `${hourNow}:${minuteNow}`;
+    let currentTime = new Date();
+    let hourNow = currentTime.getHours();
+    let minuteNow = currentTime.getMinutes();
+    let timeNow = `${hourNow}:${minuteNow}`;
     return (timeNow);
 };
 
 function actualDay() {
-    var currentDay = new Date();
-    var options = { weekday: "long", year: 'numeric', month: 'long', day: "numeric" };
-    var dayNow = currentDay.toLocaleDateString("es-ES", options);
+    let currentDay = new Date();
+    let options = { weekday: "long", year: 'numeric', month: 'long', day: "numeric" };
+    let dayNow = currentDay.toLocaleDateString("es-ES", options);
     return (dayNow);
 };
 

@@ -22,25 +22,11 @@
 
   <div class="container py-2 font-monospace">
 
-    <!-- <div class="position-relative top-0 end-0" style="width: min-content;"> -->
     <div class="py-4 text-uppercase text-center" id="heading">
       <h1 class="">
         <%= listTitle %>
       </h1>
     </div>
-    <!-- <div class="list-group text-end">
-        <label class="list-group-item">
-          <input class="form-check-input me-1" type="checkbox" value="">
-          U29
-        </label>
-        <label class="list-group-item">
-          <input class="form-check-input me-1" type="checkbox" value="">
-          U30
-        </label>
-      </div>
-    </div> -->
-
-
 
     <hr class="py-1">
     </hr>
@@ -83,10 +69,8 @@
       <% }); %>
 
         <div>
-          <form action="/savelist" method="POST">
-            <input type="hidden" name="title" value="<%= listTitle %>">
-            <button type="submit" id="savelist" class="btn btn-dark">Save list</button>
-          </form>
+          <button type="button" onclick="location.href = '/savelist';" id="savelist" class="btn btn-dark">Save
+            list</button>
           <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
           <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic
             list</button>
