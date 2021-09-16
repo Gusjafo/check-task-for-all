@@ -22,8 +22,11 @@ for (i of obsField) {
     obsTextArray[index] = event.data;
     console.log(obsTextArray[index]);
     index++;
+    // obsField.innerHTML = index;
   });
 }
+
+
 
 document.querySelectorAll("input[name=checkbox]").forEach(element =>
   element.addEventListener('input', selectedInput))

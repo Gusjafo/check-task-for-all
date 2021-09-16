@@ -156,6 +156,7 @@ app.get('/inicio', auth, (req, res) => {
                         res.render("list", {
                             listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
                             newListItems: foundItems,
+                            user: user.priority
                         });
                     }
                 }).sort({ numberOfTask: 1 });
