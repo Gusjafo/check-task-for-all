@@ -2,17 +2,26 @@ let socket = io();
 
 let obsField = document.getElementsByClassName('obs');
 let obsTextArray = [];
+index = 0;
 
 let tokenUser = document.cookie
   .split('; ')
   .find(row => row.startsWith('token='))
   .split('=')[1];
 
+// for (i of obsField) {
+//   i.addEventListener('input', (event) => {
+//     event.preventDefault()
+//     obsTextArray.push(event.data);
+//     console.log(obsTextArray);
+//   });
+// }
 for (i of obsField) {
-  i.addEventListener('input', (e) => {
-    e.preventDefault()
-    obsTextArray.push(e.data);
-    console.log(obsTextArray);
+  i.addEventListener('input', (event) => {
+    event.preventDefault()
+    obsTextArray[index] = event.data;
+    console.log(obsTextArray[index]);
+    index++;
   });
 }
 
@@ -24,6 +33,7 @@ function selectedInput() {
   obsTextString = obsTextArray.join("");
   console.log(typeof obsTextString);
   obsTextArray = [];
+  index = 0;
   console.log("Saliendo desde host con " + this.value);
   console.log("Saliendo desde host con " + obsTextString);
   socket.emit('checkbox changed', this.value, obsTextString, tokenUser);

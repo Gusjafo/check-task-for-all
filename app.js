@@ -127,11 +127,11 @@ app.post('/preinicio', auth, (req, res) => {
     if (unitRun == 'U 29' || unitRun == 'U 30' ) {
         res
             .status(200)
-            .redirect(301, '/inicio');
+            .redirect(302, '/inicio');
     } else {
         res
             .status(200)
-            .redirect(301, '/historic');
+            .redirect(302, '/historic');
     }
 })
 
@@ -335,10 +335,10 @@ io.on('connection', (socket) => {
 
 function actualTime() {
     let currentTime = new Date();
-    let hourNow = currentTime.getHours();
-    let minuteNow = currentTime.getMinutes();
-    let timeNow = `${hourNow}:${minuteNow}`;
-    return (timeNow);
+    currentTime = currentTime.toString();
+    currentTime = currentTime.substring(16, 21);
+    console.log(currentTime);
+    return (currentTime);
 };
 
 function actualDay() {
