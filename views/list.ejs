@@ -24,7 +24,8 @@
 
     <div class="py-4 text-uppercase text-center" id="heading">
       <h1 class="">
-        <%= listTitle %>
+        <%= listTitle %> <br>
+        <%= listTitle2 %>
       </h1>
     </div>
 
@@ -67,9 +68,8 @@
       <hr class="my-2 py-1">
       </hr>
       <% }); %>
-
         <div>
-          <button type="button" onclick="location.href = '/savelist';" id="savelist" class="btn btn-dark">Save
+          <button type="button" onclick="if(confirm('Esta seguro? reiniciará el listado luego de guardar.')){location.href = '/savelist';}else{return false;}" id="savelist" class="btn btn-dark">Save
             list</button>
           <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
           <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic

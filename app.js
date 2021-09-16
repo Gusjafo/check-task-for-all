@@ -154,7 +154,8 @@ app.get('/inicio', auth, (req, res) => {
                         let index = dayToSend.indexOf(',');
                         let dayShortToSend = dayToSend.substring(0, (index + 4));
                         res.render("list", {
-                            listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
+                            listTitle: dayShortToSend,
+                            listTitle2: 'Arranque ' + unitRun,
                             newListItems: foundItems,
                         });
                     }
