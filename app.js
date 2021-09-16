@@ -156,7 +156,6 @@ app.get('/inicio', auth, (req, res) => {
                         res.render("list", {
                             listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
                             newListItems: foundItems,
-                            user: user.priority
                         });
                     }
                 }).sort({ numberOfTask: 1 });
@@ -278,6 +277,7 @@ app.get('/savelist', auth, (req, res) => {
                     );
 
                 } else {
+                    console.log('no autorizado');
                     res.redirect(401, '/inicio');
                 }
             }

@@ -9,24 +9,13 @@ let tokenUser = document.cookie
   .find(row => row.startsWith('token='))
   .split('=')[1];
 
-// for (i of obsField) {
-//   i.addEventListener('input', (event) => {
-//     event.preventDefault()
-//     obsTextArray.push(event.data);
-//     console.log(obsTextArray);
-//   });
-// }
 for (i of obsField) {
   i.addEventListener('input', (event) => {
     event.preventDefault()
-    obsTextArray[index] = event.data;
-    console.log(obsTextArray[index]);
-    index++;
-    // obsField.innerHTML = index;
+    obsTextArray.push(event.data);
+    console.log(obsTextArray);
   });
 }
-
-
 
 document.querySelectorAll("input[name=checkbox]").forEach(element =>
   element.addEventListener('input', selectedInput))
@@ -34,7 +23,6 @@ document.querySelectorAll("input[name=checkbox]").forEach(element =>
 function selectedInput() {  
   console.log(obsTextArray);
   obsTextString = obsTextArray.join("");
-  console.log(typeof obsTextString);
   obsTextArray = [];
   index = 0;
   console.log("Saliendo desde host con " + this.value);
