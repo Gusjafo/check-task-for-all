@@ -75,26 +75,26 @@ app.get('/redirect', (req, res) => {
                 .status(200)
                 .cookie('token', response.idToken)
                 .redirect('/preinicio');
-        }, 500);
+        }, 250);
     }).catch((error) => {
-        console.log(error);
+        console.log(JSON.stringify(error));
         res.status(500).send(error);
     });
 });
 
 app.get('/preinicio', auth, (req, res) => {
-    console.log('en preinicio: ' + unitRun);
+    // console.log('en preinicio: ' + unitRun);
     if (unitRun == "") {
         let decoded = decodeToken(req);
         let oidUser = decoded.oid;
         let tidUser = decoded.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-            console.log(user);
+            // console.log(user);
             if (err) {
-                console.log(err);
+                console.log(JSON.stringify(err));
                 return handleError(err);
             } else {
-                console.log(user.priority);
+                // console.log(user.priority);
                 if (user.priority == 0) {
                     res
                         .status(200)
@@ -102,7 +102,7 @@ app.get('/preinicio', auth, (req, res) => {
                 } else {
                     res.sendFile(__dirname + '/public/preinicio.html', function (err) {
                         if (err) {
-                            console.log(err);
+                            console.log(JSON.stringify(err));
                         } else {
                             console.log('Sent')
                         }
@@ -112,19 +112,24 @@ app.get('/preinicio', auth, (req, res) => {
             }
         });
     } else {
-        console.log("hacia inicio");
-        res
-            .status(200)
-            .redirect(302, '/inicio');
+        // console.log("hacia inicio");
+        if (unitRun == 'historicos') {
+            unitTun = '';
+            return;
+        } else {
+            res
+                .status(200)
+                .redirect(302, '/inicio');
+        }
     }
 });
 
 app.post('/preinicio', auth, (req, res) => {
     // guardar si es U29 o U30 
     // redireccionar a inicio o a historial
-    console.log(req.body.firstChoice);
+    // console.log(req.body.firstChoice);
     unitRun = req.body.firstChoice;
-    if (unitRun == 'U 29' || unitRun == 'U 30' ) {
+    if (unitRun == 'U 29' || unitRun == 'U 30') {
         res
             .status(200)
             .redirect(302, '/inicio');
@@ -141,19 +146,20 @@ app.get('/inicio', auth, (req, res) => {
     let tidUser = decoded.tid;
     User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
         if (err) {
-            console.log(err);
+            console.log(JSON.stringify(err));
             return handleError(err);
         } else {
             if (user) {
                 Item.find({}, function (err, foundItems) {
                     if (err) {
-                        console.log(err);
+                        console.log(JSON.stringify(err));
                         return handleError(err);
                     } else {
                         let dayToSend = actualDay();
                         let index = dayToSend.indexOf(',');
                         let dayShortToSend = dayToSend.substring(0, (index + 4));
                         res.render("list", {
+                            userPriority: user.priority,
                             listTitle: dayShortToSend,
                             listTitle2: 'Arranque ' + unitRun,
                             newListItems: foundItems,
@@ -174,7 +180,7 @@ app.get("/update", auth, (req, res) => {
     Item.find({},
         function (err, foundMaxItem) {
             if (err) {
-                console.log(err);
+                console.log(JSON.stringify(err));
                 return handleError(err);
             }
             if (foundMaxItem[0].numberOfTask == undefined) {
@@ -187,7 +193,7 @@ app.get("/update", auth, (req, res) => {
     User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
         function (err, user) {
             if (err) {
-                console.log(err);
+                console.log(JSON.stringify(err));
                 return handleError(err);
             } else {
                 if (user.priority == process.env.ADMIN) {
@@ -220,7 +226,7 @@ app.post("/update", auth, (req, res) => {
         if (err) {
             return handleError(err);
         } else {
-            console.log(result);
+            // console.log(result);
             let taskAdded = result.numberOfTask;
             let idTaskAdded = result._id;
             Item.updateMany(
@@ -231,7 +237,7 @@ app.post("/update", auth, (req, res) => {
                 { $inc: { numberOfTask: 1 } },
                 { multi: true }, function (err) {
                     if (err) {
-                        console.log(err);
+                        console.log(JSON.stringify(err));
                         return handleError(err);
                     }
                 }
@@ -241,7 +247,7 @@ app.post("/update", auth, (req, res) => {
     });
     setTimeout(() => {
         res.redirect("/update");
-    }, 400);
+    }, 250);
 })
 
 app.get('/savelist', auth, (req, res) => {
@@ -250,14 +256,14 @@ app.get('/savelist', auth, (req, res) => {
     User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
         function (err, user) {
             if (err) {
-                console.log(err);
+                console.log(JSON.stringify(err));
                 return handleError(err);
             } else {
                 if (user.priority == process.env.ADMIN || user.priority == process.env.USUARIO) {
                     Item.find({},
                         function (err, foundItems) {
                             if (err) {
-                                console.log(err);
+                                console.log(JSON.stringify(err));
                                 return handleError(err);
                             } else {
                                 const historic = new Historic({
@@ -269,7 +275,7 @@ app.get('/savelist', auth, (req, res) => {
                                 historic.save();
                                 console.log("Successfully saved to historic");
                                 unitRun = "";
-                                setTimeout(() => {                                    
+                                setTimeout(() => {
                                     cleanMainList();
                                     res.redirect(302, '/preinicio');
                                 }, 500);
@@ -297,7 +303,7 @@ app.get('/historic', auth, (req, res) => {
 io.on('connection', (socket) => {
 
     socket.on('checkbox changed', (msg, obsField, tokenUser) => {
-        console.log(msg + " " + obsField + " ");
+        // console.log(msg + " " + obsField + " ");
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
@@ -307,7 +313,7 @@ io.on('connection', (socket) => {
         let userName = name.substring(0, index);
         Item.findOne({ _id: checkedItemId }, function (err, item) {
             if (err) {
-                console.log(err);
+                console.log(JSON.stringify(err));
                 return handleError(err);
             } else {
                 item.checkbox == "checked" ? checked = "" : checked = "checked";
@@ -329,9 +335,9 @@ io.on('connection', (socket) => {
             }
         })
         setTimeout(() => {
-            console.log("volviendo");
+            // console.log("volviendo");
             io.emit('checkbox changed', msg);
-        }, 400);
+        }, 250);
     });
 });
 
@@ -339,7 +345,7 @@ function actualTime() {
     let currentTime = new Date();
     currentTime = currentTime.toString();
     currentTime = currentTime.substring(16, 21);
-    console.log(currentTime);
+    // console.log(currentTime);
     return (currentTime);
 };
 
@@ -367,7 +373,7 @@ function cleanMainList() {
         function (err, foundItems) {
             console.log(foundItems.n + " Items cleaned!");
             if (err) {
-                console.log(err);
+                console.log(JSON.stringify(err));
                 return handleError(err);
             }
         }

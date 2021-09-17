@@ -1,33 +1,29 @@
 let socket = io();
 
-let obsField = document.getElementsByClassName('obs');
-let obsTextArray = [];
-index = 0;
+let user = document.getElementById('hidden').value;
 
 let tokenUser = document.cookie
   .split('; ')
   .find(row => row.startsWith('token='))
   .split('=')[1];
 
-for (i of obsField) {
-  i.addEventListener('input', (event) => {
-    event.preventDefault()
-    obsTextArray.push(event.data);
-    console.log(obsTextArray);
-  });
-}
+let obsField = document.getElementsByClassName('obs');
+let obsTextArray = [];
+index = 0;
 
-document.querySelectorAll("input[name=checkbox]").forEach(element =>
+document.querySelectorAll("input[type=checkbox]").forEach(element =>
   element.addEventListener('input', selectedInput))
- 
-function selectedInput() {  
-  console.log(obsTextArray);
-  obsTextString = obsTextArray.join("");
-  obsTextArray = [];
-  index = 0;
-  console.log("Saliendo desde host con " + this.value);
-  console.log("Saliendo desde host con " + obsTextString);
-  socket.emit('checkbox changed', this.value, obsTextString, tokenUser);
+
+function selectedInput() {
+  if (user != 0) {
+    let textForm = document.getElementById('task' + this.name).value;
+    console.log("Saliendo desde host con " + this.value);
+    console.log("Saliendo desde host con " + textForm);
+    socket.emit('checkbox changed', this.value, textForm, tokenUser);
+  } else {
+    alert('No tienes suficientes permisos');
+    location.reload();
+  }
 }
 
 socket.on('checkbox changed', function (msg) {
@@ -36,3 +32,4 @@ socket.on('checkbox changed', function (msg) {
     location.reload();
   }
 });
+

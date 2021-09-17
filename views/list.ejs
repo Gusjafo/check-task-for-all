@@ -25,7 +25,7 @@
     <div class="py-4 text-uppercase text-center" id="heading">
       <h1 class="">
         <%= listTitle %> <br>
-        <%= listTitle2 %>
+          <%= listTitle2 %>
       </h1>
     </div>
 
@@ -45,8 +45,8 @@
       </div>
       <div class="row">
         <div class="col-4 btn-group btn-group-lg p-2">
-          <input type="checkbox" class="btn-check checkbox" name="checkbox" id="<%=item._id%>" value="<%=item._id%>"
-            <%=item.checkbox %> autocomplete="off">
+          <input type="checkbox" class="btn-check checkbox" name="<%= item.numberOfTask %>" id="<%=item._id%>"
+            value="<%=item._id%>" <%=item.checkbox %> autocomplete="off">
           <label class="btn btn-outline-primary" for="<%=item._id%>">Check</label>
         </div>
         <div class="col-3 text-center mt-2">
@@ -59,21 +59,28 @@
         </div>
         <div class="col-5 p-1 ps-0">
           <div class="form-floating">
-            <input type="text" class="form-control obs" id="floatingInputGrid" placeholder="obs" style="font-size: x-small;"
-              value="<%= item.observation %>"></input>
-            <label for="floatingInputGrid">Obs</label>
+            <input type="text" class="form-control obs" id="task<%= item.numberOfTask %>" placeholder="obs"
+              style="font-size: x-small;" value="<%= item.observation %>"></input>
+            <label for="task<%= item.numberOfTask %>">Obs</label>
           </div>
         </div>
       </div>
       <hr class="my-2 py-1">
       </hr>
       <% }); %>
-        <div>
-          <button type="button" onclick="if(confirm('Esta seguro? reiniciará el listado luego de guardar.')){location.href = '/savelist';}else{return false;}" id="savelist" class="btn btn-dark">Save
-            list</button>
-          <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
-          <button type="button" onclick="location.href = '/historic';" class="btn btn-dark">to Historic
-            list</button>
+        <div class="container">
+          <!-- <div class="align-items-center"> -->
+            <div class="btn-group btn-group-md p-3 m-0">
+              <button type="button"
+                onclick="if(confirm('Esta seguro? reiniciará el listado luego de guardar.')){location.href = '/savelist';}else{return false;}"
+                id="savelist" class="btn btn-dark">Save
+                list</button>
+              <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
+              <button type="button" onclick="alert('Estamos trabajando en ello')" class="btn btn-dark">to Historic
+                list</button>
+            </div>
+            <input type="hidden" name="hidden" id="hidden" value="<%= userPriority %> ">
+          <!-- </div> -->
         </div>
 
 
