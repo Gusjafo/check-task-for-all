@@ -343,9 +343,11 @@ io.on('connection', (socket) => {
 
 function actualTime() {
     let currentTime = new Date();
+    currentTime.setHours(currentTime.getHours() - 3);
+    console.log(currentTime);
     currentTime = currentTime.toString();
     currentTime = currentTime.substring(16, 21);
-    // console.log(currentTime);
+    console.log(currentTime);
     return (currentTime);
 };
 
