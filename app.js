@@ -20,7 +20,7 @@ let unitRun = "";
 
 // Create msal application object
 const cca = require("./config/login");
-const { getMaxListeners } = require('process');
+//const { getMaxListeners } = require('process');
 
 app.get('/', (req, res) => {
     const authCodeUrlParameters = {
