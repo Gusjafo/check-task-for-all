@@ -3,7 +3,6 @@ require("./config/database").connect();
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const routing = require('./router/routing');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
@@ -13,8 +12,6 @@ const port = process.env.PORT || 3000;
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 app.use(express.static("public"));
-app.use('/', routing);
-
 const Item = require("./model/item");
 const Historic = require("./model/historic");
 const User = require("./model/user");
@@ -22,70 +19,101 @@ const auth = require("./middleware/auth");
 let unitRun = "";
 
 // Create msal application object
-const cca = require("./config/login");
+// const cca = require("./config/login");
+// const { getMaxListeners } = require('process');
+
+// app.get('/', (req, res) => {
+//     const authCodeUrlParameters = {
+//         scopes: ["user.read"],
+//         redirectUri: `${process.env.REDIRECT}`,
+//     };
+
+//     // get url to sign user in and consent to scopes needed for application
+//     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
+//         res.redirect(response);
+//     }).catch((error) => console.log(JSON.stringify(error)));
+// });
 
 app.get('/', (req, res) => {
-    const authCodeUrlParameters = {
-        scopes: ["user.read"],
-        redirectUri: `${process.env.REDIRECT}`,
-    };
-
-    // get url to sign user in and consent to scopes needed for application
-    cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-        res.redirect(response);
+    User.findOne({ email: 'f_gustavo83@hotmail.com' }, function (err, user) {
+        if (err) {
+            return err
+        } else {
+            return user;
+        }
+    }).then((response) => {
+        console.log(response);
+        const token = jwt.sign(
+            {
+                user_id: response._id,
+                mail: response.email,
+                oid: response.key.oid,
+                tid: response.key.tid
+            },
+            process.env.TOKEN_KEY,
+            {
+                expiresIn: "2h",
+            }
+        );
+        console.log(token);
+        res
+            .status(302)
+            .cookie('token', token)
+            .redirect('/preinicio');
     }).catch((error) => console.log(JSON.stringify(error)));
 });
 
-app.get('/redirect', (req, res) => {
-    const tokenRequest = {
-        code: req.query.code,
-        scopes: ["user.read"],
-        redirectUri: `${process.env.REDIRECT}`,
-    };
-    cca.acquireTokenByCode(tokenRequest).then((response) => {
-        let oidUser = response.account.idTokenClaims.oid;
-        let tidUser = response.account.idTokenClaims.tid;
-        User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-            console.log('/redirect ', user);
-            if (err) {
-                return handleError(err);
-            } else {
-                if (user === null) {
-                    addNewUser(response);
-                }
-            }
-        });
-        function addNewUser(response) {
-            const user = new User({
-                email: response.account.username,
-                name: response.account.name,
-                key: {
-                    oid: oidUser,
-                    tid: tidUser
-                },
-                priority: 0
-            });
-            user.save(function (err) {
-                if (err) return handleError(err);
-                // saved!
-            });
-        };
-        setTimeout(() => {
-            res
-                .status(200)
-                .cookie('token', response.idToken)
-                .redirect('/preinicio');
-        }, 250);
-    }).catch((error) => {
-        console.log(JSON.stringify(error));
-        res.status(500).send(error);
-    });
-});
+// app.get('/redirect', (req, res) => {
+//     const tokenRequest = {
+//         code: req.query.code,
+//         scopes: ["user.read"],
+//         redirectUri: `${process.env.REDIRECT}`,
+//     };
+//     cca.acquireTokenByCode(tokenRequest).then((response) => {
+//         let oidUser = response.account.idTokenClaims.oid;
+//         let tidUser = response.account.idTokenClaims.tid;
+//         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+//             console.log('/redirect ', user);
+//             if (err) {
+//                 return handleError(err);
+//             } else {
+//                 if (user === null) {
+//                     addNewUser(response);
+//                 }
+//             }
+//         });
+//         function addNewUser(response) {
+//             const user = new User({
+//                 email: response.account.username,
+//                 name: response.account.name,
+//                 key: {
+//                     oid: oidUser,
+//                     tid: tidUser
+//                 },
+//                 priority: 0
+//             });
+//             user.save(function (err) {
+//                 if (err) return handleError(err);
+//                 // saved!
+//             });
+//         };
+//         setTimeout(() => {
+//             res
+//                 .status(200)
+//                 .cookie('token', response.idToken)
+//                 .redirect('/preinicio');
+//         }, 250);
+//     }).catch((error) => {
+//         console.log(JSON.stringify(error));
+//         res.status(500).send(error);
+//     });
+// });
 
 app.get('/preinicio', auth, (req, res) => {
-    // console.log('en preinicio: ' + unitRun);
+    console.log('en preinicio: ' + unitRun);
     if (unitRun == "") {
         let decoded = decodeToken(req);
+        console.log(decoded);
         let oidUser = decoded.oid;
         let tidUser = decoded.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
@@ -106,8 +134,7 @@ app.get('/preinicio', auth, (req, res) => {
                         } else {
                             console.log('Sent')
                         }
-                    }
-                    );
+                    });
                 }
             }
         });
@@ -117,6 +144,7 @@ app.get('/preinicio', auth, (req, res) => {
             unitTun = '';
             return;
         } else {
+            console.log('en preinicio: ' + unitRun);
             res
                 .status(200)
                 .redirect(302, '/inicio');
@@ -177,38 +205,51 @@ app.get("/update", auth, (req, res) => {
     let numberOfMaxTask = 0;
     let decoded = decodeToken(req);
 
-    Item.find({},
-        function (err, foundMaxItem) {
-            if (err) {
-                console.log(JSON.stringify(err));
-                return handleError(err);
-            }
-            if (foundMaxItem[0].numberOfTask == undefined) {
-                numberOfMaxTask = 0;
-            } else {
-                numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
-            }
-        }).sort({ numberOfTask: -1 }).limit(1);
-
-    User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
-        function (err, user) {
-            if (err) {
-                console.log(JSON.stringify(err));
-                return handleError(err);
-            } else {
-                if (user.priority == process.env.ADMIN) {
-                    let dayToSend = actualDay();
-                    let index = dayToSend.indexOf(',');
-                    let dayShortToSend = dayToSend.substring(0, (index + 4));
-                    res.render("update", {
-                        listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
-                        numberOfTask: numberOfMaxTask
-                    });
-                } else {
-                    res.redirect(401, '/inicio');
+    Item.find({}, function (err, foundMaxItem) {
+        console.log(foundMaxItem);
+        if (err) {
+            console.log('en error');
+            console.log(JSON.stringify(err));
+            numberOfMaxTask = 0;
+            return handleError(err);
+        }
+        if (foundMaxItem == null ||
+            foundMaxItem == undefined ||
+            foundMaxItem == 0 ||
+            foundMaxItem.length == 0) {
+            console.log('en segundo if');
+            numberOfMaxTask = 1;
+            return;
+        } else {
+            console.log('en else');
+            numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
+            return;
+        }
+    }).sort({ numberOfTask: -1 })
+        .limit(1)
+        .then(function () {
+            User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
+                function (err, user) {
+                    console.log('llegue a findOne');
+                    if (err) {
+                        console.log(JSON.stringify(err));
+                        return handleError(err);
+                    } else {
+                        if (user.priority == process.env.ADMIN) {
+                            let dayToSend = actualDay();
+                            let index = dayToSend.indexOf(',');
+                            let dayShortToSend = dayToSend.substring(0, (index + 4));
+                            res.render("update", {
+                                listTitle: 'Arranque ' + unitRun + " - " + dayShortToSend,
+                                numberOfTask: numberOfMaxTask
+                            });
+                        } else {
+                            res.redirect(401, '/inicio');
+                        }
+                    }
                 }
-            }
-        })
+            )
+        });
 })
 
 app.post("/update", auth, (req, res) => {
@@ -241,56 +282,57 @@ app.post("/update", auth, (req, res) => {
                         return handleError(err);
                     }
                 }
-            );
+            ).then(res.redirect("/update"));
         }
-        // saved!
     });
-    setTimeout(() => {
-        res.redirect("/update");
-    }, 250);
-})
+});
 
 app.get('/savelist', auth, (req, res) => {
     let dayToSend = actualDay();
     let decoded = decodeToken(req);
-    User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
-        function (err, user) {
-            if (err) {
-                console.log(JSON.stringify(err));
-                return handleError(err);
+    User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } }, function (err, user) {
+        if (err) {
+            console.log(JSON.stringify(err));
+            return handleError(err);
+        } else {
+            if (user.priority == process.env.ADMIN || user.priority == process.env.USUARIO) {
+                Item.find({}, function (err, foundItems) {
+                    if (err) {
+                        console.log(JSON.stringify(err));
+                        return handleError(err);
+                    } if (foundItems) {
+                        const historic = new Historic({
+                            unit: unitRun,
+                            date: dayToSend,
+                            savedBy: decoded.mail,
+                            tasks: foundItems
+                        });
+                        historic.save();
+                        console.log("Successfully saved to historic");
+                        unitRun = "";
+                        console.log("unitRun clareada: " + unitRun);
+                        cleanMainList();
+                        return foundItems;
+                    }
+                }).then((response) => {
+                    if (response) {
+                        console.log('hacia preinicio');
+                        res.redirect(302, '/preinicio')
+                    }
+                });
             } else {
-                if (user.priority == process.env.ADMIN || user.priority == process.env.USUARIO) {
-                    Item.find({},
-                        function (err, foundItems) {
-                            if (err) {
-                                console.log(JSON.stringify(err));
-                                return handleError(err);
-                            } else {
-                                const historic = new Historic({
-                                    unit: unitRun,
-                                    date: dayToSend,
-                                    savedBy: decoded.preferred_username,
-                                    tasks: foundItems
-                                });
-                                historic.save();
-                                console.log("Successfully saved to historic");
-                                unitRun = "";
-                                setTimeout(() => {
-                                    cleanMainList();
-                                    res.redirect(302, '/preinicio');
-                                }, 500);
-                            }
-                        }
-                    );
-
-                } else {
-                    console.log('no autorizado');
-                    res.redirect(401, '/inicio');
-                }
+                console.log('no autorizado');
+                res.redirect(401, '/inicio');
             }
         }
-    );
+    });
 })
+
+
+
+
+
+
 
 // The displayWarning() function presents a notification of a problem.
 // https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault
@@ -307,15 +349,15 @@ io.on('connection', (socket) => {
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
-        let decoded = jwt.decode(tokenUser);
-        let name = decoded.preferred_username;
+        let decoded = jwt.verify(tokenUser, process.env.TOKEN_KEY);
+        let name = decoded.mail;
         let index = name.indexOf("@");
         let userName = name.substring(0, index);
         Item.findOne({ _id: checkedItemId }, function (err, item) {
             if (err) {
                 console.log(JSON.stringify(err));
                 return handleError(err);
-            } else {
+            } if (item) {
                 item.checkbox == "checked" ? checked = "" : checked = "checked";
                 checked == "checked" ? timeToSend = timeToSend : timeToSend = "";
                 Item.findOneAndUpdate(
@@ -329,15 +371,12 @@ io.on('connection', (socket) => {
                     function (err) {
                         if (!err) {
                             console.log("Successfully updated checked item.");
+                            io.emit('checkbox changed', msg);
                         }
                     }
                 );
             }
         })
-        setTimeout(() => {
-            // console.log("volviendo");
-            io.emit('checkbox changed', msg);
-        }, 250);
     });
 });
 
@@ -364,9 +403,9 @@ function decodeToken(req) {
         req.headers.cookie ||
         req.headers["x-access-token"];
     let token = tokenReq.split("=").pop();
-    const decoded = jwt.decode(token);
+    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
     return decoded;
-}
+};
 
 function cleanMainList() {
     Item.updateMany({},
@@ -379,10 +418,11 @@ function cleanMainList() {
                 return handleError(err);
             }
         }
-    );
-    console.log("List cleaned");
-    return;
-}
+    ).then(function () {
+        console.log("List cleaned");
+        return;
+    });
+};
 
 
 http.listen(port, () => {
