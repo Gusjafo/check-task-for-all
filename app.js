@@ -19,97 +19,66 @@ const auth = require("./middleware/auth");
 let unitRun = "";
 
 // Create msal application object
-// const cca = require("./config/login");
-// const { getMaxListeners } = require('process');
-
-// app.get('/', (req, res) => {
-//     const authCodeUrlParameters = {
-//         scopes: ["user.read"],
-//         redirectUri: `${process.env.REDIRECT}`,
-//     };
-
-//     // get url to sign user in and consent to scopes needed for application
-//     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-//         res.redirect(response);
-//     }).catch((error) => console.log(JSON.stringify(error)));
-// });
+const cca = require("./config/login");
+const { getMaxListeners } = require('process');
 
 app.get('/', (req, res) => {
-    User.findOne({ email: 'f_gustavo83@hotmail.com' }, function (err, user) {
-        if (err) {
-            return handleError(err);
-        } if (user) {
-            console.log(user);
-            const token = jwt.sign(
-                {
-                    user_id: user._id,
-                    mail: user.email,
-                    oid: user.key.oid,
-                    tid: user.key.tid
-                },
-                process.env.TOKEN_KEY,
-                {
-                    expiresIn: "2h",
-                }
-            );
-            console.log(token);
-            res
-                .status(302)
-                .cookie('token', token)
-                .redirect('/preinicio');
-        }
-        if (user == null) {
-            console.log('usuario no identificado');
-            return;
-        }
-    });
-});
+    const authCodeUrlParameters = {
+        scopes: ["user.read"],
+        redirectUri: `${process.env.REDIRECT}`,
+    };
 
-// app.get('/redirect', (req, res) => {
-//     const tokenRequest = {
-//         code: req.query.code,
-//         scopes: ["user.read"],
-//         redirectUri: `${process.env.REDIRECT}`,
-//     };
-//     cca.acquireTokenByCode(tokenRequest).then((response) => {
-//         let oidUser = response.account.idTokenClaims.oid;
-//         let tidUser = response.account.idTokenClaims.tid;
-//         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-//             console.log('/redirect ', user);
-//             if (err) {
-//                 return handleError(err);
-//             } else {
-//                 if (user === null) {
-//                     addNewUser(response);
-//                 }
-//             }
-//         });
-//         function addNewUser(response) {
-//             const user = new User({
-//                 email: response.account.username,
-//                 name: response.account.name,
-//                 key: {
-//                     oid: oidUser,
-//                     tid: tidUser
-//                 },
-//                 priority: 0
-//             });
-//             user.save(function (err) {
-//                 if (err) return handleError(err);
-//                 // saved!
-//             });
-//         };
-//         setTimeout(() => {
-//             res
-//                 .status(200)
-//                 .cookie('token', response.idToken)
-//                 .redirect('/preinicio');
-//         }, 250);
-//     }).catch((error) => {
-//         console.log(JSON.stringify(error));
-//         res.status(500).send(error);
-//     });
-// });
+     // get url to sign user in and consent to scopes needed for application
+     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
+         res.redirect(response);
+     }).catch((error) => console.log(JSON.stringify(error)));
+ });
+
+ app.get('/redirect', (req, res) => {
+     const tokenRequest = {
+         code: req.query.code,
+         scopes: ["user.read"],
+         redirectUri: `${process.env.REDIRECT}`,
+     };
+     cca.acquireTokenByCode(tokenRequest).then((response) => {
+         let oidUser = response.account.idTokenClaims.oid;
+         let tidUser = response.account.idTokenClaims.tid;
+         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+             console.log('/redirect ', user);
+             if (err) {
+                 return handleError(err);
+             } else {
+                 if (user === null) {
+                     addNewUser(response);
+                 }
+             }
+         });
+         function addNewUser(response) {
+             const user = new User({
+                 email: response.account.username,
+                 name: response.account.name,
+                 key: {
+                     oid: oidUser,
+                     tid: tidUser
+                 },
+                 priority: 0
+             });
+             user.save(function (err) {
+                 if (err) return handleError(err);
+                 // saved!
+             });
+         };
+         setTimeout(() => {
+             res
+                 .status(200)
+                 .cookie('token', response.idToken)
+                 .redirect('/preinicio');
+         }, 250);
+     }).catch((error) => {
+         console.log(JSON.stringify(error));
+         res.status(500).send(error);
+     });
+ });
 
 app.get('/preinicio', auth, (req, res) => {
     // console.log('en preinicio, auth: ' + auth);
