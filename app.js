@@ -37,30 +37,32 @@ let unitRun = "";
 app.get('/', (req, res) => {
     User.findOne({ email: 'f_gustavo83@hotmail.com' }, function (err, user) {
         if (err) {
-            return err
-        } else {
-            return user;
+            return handleError(err);
+        } if (user) {
+            console.log(user);
+            const token = jwt.sign(
+                {
+                    user_id: user._id,
+                    mail: user.email,
+                    oid: user.key.oid,
+                    tid: user.key.tid
+                },
+                process.env.TOKEN_KEY,
+                {
+                    expiresIn: "2h",
+                }
+            );
+            console.log(token);
+            res
+                .status(302)
+                .cookie('token', token)
+                .redirect('/preinicio');
         }
-    }).then((response) => {
-        console.log(response);
-        const token = jwt.sign(
-            {
-                user_id: response._id,
-                mail: response.email,
-                oid: response.key.oid,
-                tid: response.key.tid
-            },
-            process.env.TOKEN_KEY,
-            {
-                expiresIn: "2h",
-            }
-        );
-        console.log(token);
-        res
-            .status(302)
-            .cookie('token', token)
-            .redirect('/preinicio');
-    }).catch((error) => console.log(JSON.stringify(error)));
+        if (user == null) {
+            console.log('usuario no identificado');
+            return;
+        }
+    });
 });
 
 // app.get('/redirect', (req, res) => {
@@ -110,18 +112,19 @@ app.get('/', (req, res) => {
 // });
 
 app.get('/preinicio', auth, (req, res) => {
-    console.log('en preinicio: ' + unitRun);
+    // console.log('en preinicio, auth: ' + auth);
+    console.log('en preinicio, req: ', req.res.user);
     if (unitRun == "") {
-        let decoded = decodeToken(req);
-        console.log(decoded);
+        let decoded = req.res.user;
+        console.log('en preinicio, decoded: ', decoded);
         let oidUser = decoded.oid;
         let tidUser = decoded.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-            // console.log(user);
+            console.log(user);
             if (err) {
                 console.log(JSON.stringify(err));
                 return handleError(err);
-            } else {
+            } if (user) {
                 // console.log(user.priority);
                 if (user.priority == 0) {
                     res
@@ -169,7 +172,7 @@ app.post('/preinicio', auth, (req, res) => {
 })
 
 app.get('/inicio', auth, (req, res) => {
-    let decoded = decodeToken(req);
+    let decoded = req.res.user;
     let oidUser = decoded.oid;
     let tidUser = decoded.tid;
     User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
@@ -203,7 +206,7 @@ app.get('/inicio', auth, (req, res) => {
 
 app.get("/update", auth, (req, res) => {
     let numberOfMaxTask = 0;
-    let decoded = decodeToken(req);
+    let decoded = req.res.user;
 
     Item.find({}, function (err, foundMaxItem) {
         console.log(foundMaxItem);
@@ -289,12 +292,12 @@ app.post("/update", auth, (req, res) => {
 
 app.get('/savelist', auth, (req, res) => {
     let dayToSend = actualDay();
-    let decoded = decodeToken(req);
+    let decoded = req.res.user;
     User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } }, function (err, user) {
         if (err) {
             console.log(JSON.stringify(err));
             return handleError(err);
-        } else {
+        } if (user) {
             if (user.priority == process.env.ADMIN || user.priority == process.env.USUARIO) {
                 Item.find({}, function (err, foundItems) {
                     if (err) {
@@ -327,11 +330,6 @@ app.get('/savelist', auth, (req, res) => {
         }
     });
 })
-
-
-
-
-
 
 
 // The displayWarning() function presents a notification of a problem.
@@ -395,16 +393,6 @@ function actualDay() {
     let options = { weekday: "long", year: 'numeric', month: 'long', day: "numeric" };
     let dayNow = currentDay.toLocaleDateString("es-ES", options);
     return (dayNow);
-};
-
-function decodeToken(req) {
-    const tokenReq =
-        req.headers.cookie["x-access-token"] ||
-        req.headers.cookie ||
-        req.headers["x-access-token"];
-    let token = tokenReq.split("=").pop();
-    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-    return decoded;
 };
 
 function cleanMainList() {
