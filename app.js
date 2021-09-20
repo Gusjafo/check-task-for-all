@@ -20,7 +20,6 @@ let unitRun = "";
 
 // Create msal application object
 const cca = require("./config/login");
-//const { getMaxListeners } = require('process');
 
 app.get('/', (req, res) => {
     const authCodeUrlParameters = {
@@ -44,7 +43,7 @@ app.get('/', (req, res) => {
          let oidUser = response.account.idTokenClaims.oid;
          let tidUser = response.account.idTokenClaims.tid;
          User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-             console.log('/redirect ', user);
+            //  console.log('/redirect ', user);
              if (err) {
                  return handleError(err);
              } else {
@@ -82,16 +81,16 @@ app.get('/', (req, res) => {
 
 app.get('/preinicio', auth, (req, res) => {
     // console.log('en preinicio, auth: ' + auth);
-    console.log('en preinicio, req: ', req.res.user);
+    // console.log('en preinicio, req: ', req.res.user);
     if (unitRun == "") {
         let decoded = req.res.user;
-        console.log('en preinicio, decoded: ', decoded);
+        // console.log('en preinicio, decoded: ', decoded);
         let oidUser = decoded.oid;
         let tidUser = decoded.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-            console.log(user);
+            // console.log(user);
             if (err) {
-                console.log(JSON.stringify(err));
+                console.log(err);
                 return handleError(err);
             } if (user) {
                 // console.log(user.priority);
@@ -276,7 +275,7 @@ app.get('/savelist', auth, (req, res) => {
                         const historic = new Historic({
                             unit: unitRun,
                             date: dayToSend,
-                            savedBy: decoded.mail,
+                            savedBy: decoded.preferred_username,
                             tasks: foundItems
                         });
                         historic.save();
@@ -316,13 +315,14 @@ io.on('connection', (socket) => {
         let checkedItemId = msg;
         let checked = "";
         let timeToSend = actualTime();
-        let decoded = jwt.verify(tokenUser, process.env.TOKEN_KEY);
-        let name = decoded.mail;
+        // let decoded = jwt.verify(tokenUser, process.env.TOKEN_KEY);
+        let decoded = jwt.decode(tokenUser);
+        let name = decoded.preferred_username;
         let index = name.indexOf("@");
         let userName = name.substring(0, index);
         Item.findOne({ _id: checkedItemId }, function (err, item) {
             if (err) {
-                console.log(JSON.stringify(err));
+                console.log(err);
                 return handleError(err);
             } if (item) {
                 item.checkbox == "checked" ? checked = "" : checked = "checked";
@@ -350,10 +350,10 @@ io.on('connection', (socket) => {
 function actualTime() {
     let currentTime = new Date();
     currentTime.setHours(currentTime.getHours() - 3);
-    console.log(currentTime);
+    // console.log(currentTime);
     currentTime = currentTime.toString();
     currentTime = currentTime.substring(16, 21);
-    console.log(currentTime);
+    // console.log(currentTime);
     return (currentTime);
 };
 
@@ -371,7 +371,7 @@ function cleanMainList() {
         function (err, foundItems) {
             console.log(foundItems.n + " Items cleaned!");
             if (err) {
-                console.log(JSON.stringify(err));
+                console.log(err);
                 return handleError(err);
             }
         }
