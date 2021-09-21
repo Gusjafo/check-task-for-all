@@ -27,57 +27,57 @@ app.get('/', (req, res) => {
         redirectUri: `${process.env.REDIRECT}`,
     };
 
-     // get url to sign user in and consent to scopes needed for application
-     cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
-         res.redirect(response);
-     }).catch((error) => console.log(JSON.stringify(error)));
- });
+    // get url to sign user in and consent to scopes needed for application
+    cca.getAuthCodeUrl(authCodeUrlParameters).then((response) => {
+        res.redirect(response);
+    }).catch((error) => console.log(JSON.stringify(error)));
+});
 
- app.get('/redirect', (req, res) => {
-     const tokenRequest = {
-         code: req.query.code,
-         scopes: ["user.read"],
-         redirectUri: `${process.env.REDIRECT}`,
-     };
-     cca.acquireTokenByCode(tokenRequest).then((response) => {
-         let oidUser = response.account.idTokenClaims.oid;
-         let tidUser = response.account.idTokenClaims.tid;
-         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
+app.get('/redirect', (req, res) => {
+    const tokenRequest = {
+        code: req.query.code,
+        scopes: ["user.read"],
+        redirectUri: `${process.env.REDIRECT}`,
+    };
+    cca.acquireTokenByCode(tokenRequest).then((response) => {
+        let oidUser = response.account.idTokenClaims.oid;
+        let tidUser = response.account.idTokenClaims.tid;
+        User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
             //  console.log('/redirect ', user);
-             if (err) {
-                 return handleError(err);
-             } else {
-                 if (user === null) {
-                     addNewUser(response);
-                 }
-             }
-         });
-         function addNewUser(response) {
-             const user = new User({
-                 email: response.account.username,
-                 name: response.account.name,
-                 key: {
-                     oid: oidUser,
-                     tid: tidUser
-                 },
-                 priority: 0
-             });
-             user.save(function (err) {
-                 if (err) return handleError(err);
-                 // saved!
-             });
-         };
-         setTimeout(() => {
-             res
-                 .status(200)
-                 .cookie('token', response.idToken)
-                 .redirect('/preinicio');
-         }, 250);
-     }).catch((error) => {
-         console.log(JSON.stringify(error));
-         res.status(500).send(error);
-     });
- });
+            if (err) {
+                return handleError(err);
+            } else {
+                if (user === null) {
+                    addNewUser(response);
+                }
+            }
+        });
+        function addNewUser(response) {
+            const user = new User({
+                email: response.account.username,
+                name: response.account.name,
+                key: {
+                    oid: oidUser,
+                    tid: tidUser
+                },
+                priority: 0
+            });
+            user.save(function (err) {
+                if (err) return handleError(err);
+                // saved!
+            });
+        };
+        setTimeout(() => {
+            res
+                .status(200)
+                .cookie('token', response.idToken)
+                .redirect('/preinicio');
+        }, 250);
+    }).catch((error) => {
+        console.log(JSON.stringify(error));
+        res.status(500).send(error);
+    });
+});
 
 app.get('/preinicio', auth, (req, res) => {
     // console.log('en preinicio, auth: ' + auth);
@@ -283,10 +283,6 @@ app.get('/savelist', auth, (req, res) => {
                         unitRun = "";
                         console.log("unitRun clareada: " + unitRun);
                         cleanMainList();
-                        return foundItems;
-                    }
-                }).then((response) => {
-                    if (response) {
                         console.log('hacia preinicio');
                         res.redirect(302, '/preinicio')
                     }
@@ -339,12 +335,12 @@ io.on('connection', (socket) => {
                         if (!err) {
                             console.log("Successfully updated checked item.");
                             io.emit('checkbox changed',
-                            msg, 
-                            obsField, 
-                            checked, 
-                            item.numberOfTask,
-                            timeToSend,
-                            userName);
+                                msg,
+                                obsField,
+                                checked,
+                                item.numberOfTask,
+                                timeToSend,
+                                userName);
                         }
                     }
                 );
@@ -373,18 +369,19 @@ function actualDay() {
 function cleanMainList() {
     Item.updateMany({},
         { $set: { checkbox: "", timeEvent: "", updatedBy: "", observation: "" } },
-        { upsert: false },
+        // { upsert: false },
         function (err, foundItems) {
             console.log(foundItems.n + " Items cleaned!");
             if (err) {
                 console.log(err);
                 return handleError(err);
             }
+            if (foundItems) {
+                console.log("List cleaned");
+                return;
+            }
         }
-    ).then(function () {
-        console.log("List cleaned");
-        return;
-    });
+    );
 };
 
 
