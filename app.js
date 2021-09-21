@@ -177,7 +177,6 @@ app.get("/update", auth, (req, res) => {
     let decoded = req.res.user;
 
     Item.find({}, function (err, foundMaxItem) {
-        console.log(foundMaxItem);
         if (err) {
             console.log('en error');
             console.log(JSON.stringify(err));
@@ -188,17 +187,10 @@ app.get("/update", auth, (req, res) => {
             foundMaxItem == undefined ||
             foundMaxItem == 0 ||
             foundMaxItem.length == 0) {
-            console.log('en segundo if');
             numberOfMaxTask = 1;
             return;
-        } else {
-            console.log('en else');
+        } if (foundMaxItem) {
             numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
-            return;
-        }
-    }).sort({ numberOfTask: -1 })
-        .limit(1)
-        .then(function () {
             User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
                 function (err, user) {
                     console.log('llegue a findOne');
@@ -220,8 +212,10 @@ app.get("/update", auth, (req, res) => {
                     }
                 }
             )
-        });
-})
+            return;
+        }
+    }).sort({ numberOfTask: -1 }).limit(1);
+});
 
 app.post("/update", auth, (req, res) => {
     const item = new Item({
@@ -237,8 +231,7 @@ app.post("/update", auth, (req, res) => {
     item.save(function (err, result) {
         if (err) {
             return handleError(err);
-        } else {
-            // console.log(result);
+        } if (result) {
             let taskAdded = result.numberOfTask;
             let idTaskAdded = result._id;
             Item.updateMany(
@@ -251,9 +244,11 @@ app.post("/update", auth, (req, res) => {
                     if (err) {
                         console.log(JSON.stringify(err));
                         return handleError(err);
+                    } else {
+                        res.redirect("/update");
                     }
                 }
-            ).then(res.redirect("/update"));
+            );
         }
     });
 });
