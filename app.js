@@ -338,7 +338,13 @@ io.on('connection', (socket) => {
                     function (err) {
                         if (!err) {
                             console.log("Successfully updated checked item.");
-                            io.emit('checkbox changed', msg);
+                            io.emit('checkbox changed',
+                            msg, 
+                            obsField, 
+                            checked, 
+                            item.numberOfTask,
+                            timeToSend,
+                            userName);
                         }
                     }
                 );

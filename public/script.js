@@ -26,10 +26,17 @@ function selectedInput() {
   }
 }
 
-socket.on('checkbox changed', function (msg) {
-  console.log("volviendo a host " + msg)
+socket.on('checkbox changed', function (msg, obsField, checkedState, task, time, updated) {
   if (msg) {
-    location.reload();
+    let idtime = 'time' + task;
+    let idupdated = 'by' + task;
+    task = 'task' + task;
+    checkedBox = document.getElementById(msg);
+    checkedState == 'checked' ? checkedBox.checked = 'checked' : checkedBox.checked = '';
+    document.getElementById(idtime).innerHTML = time;
+    document.getElementById(idupdated).innerHTML = updated;
+    document.getElementById(task).value = obsField;
+    // location.reload();
   }
 });
 

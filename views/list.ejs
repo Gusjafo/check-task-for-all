@@ -50,12 +50,13 @@
           <label class="btn btn-outline-primary" for="<%=item._id%>">Check</label>
         </div>
         <div class="col-3 text-center mt-2">
-          <%= item.timeEvent %>
-            <br>
-            <hr class="m-1">
-            <div style="font-size: x-small;">
-              <%= item.updatedBy %>
-            </div>
+          <div class="m-0 p-0" id="time<%= item.numberOfTask %>">
+            <%= item.timeEvent %>
+          </div>
+          <hr class="m-1">
+          <div id="by<%= item.numberOfTask %>" style="font-size: x-small;">
+            <%= item.updatedBy %>
+          </div>
         </div>
         <div class="col-5 p-1 ps-0">
           <div class="form-floating">
@@ -70,16 +71,16 @@
       <% }); %>
         <div class="container">
           <!-- <div class="align-items-center"> -->
-            <div class="btn-group btn-group-md p-3 m-0">
-              <button type="button"
-                onclick="if(confirm('Esta seguro? reiniciará el listado luego de guardar.')){location.href = '/savelist';}else{return false;}"
-                id="savelist" class="btn btn-dark">Save
-                list</button>
-              <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
-              <button type="button" onclick="alert('Estamos trabajando en ello')" class="btn btn-dark">to Historic
-                list</button>
-            </div>
-            <input type="hidden" name="hidden" id="hidden" value="<%= userPriority %> ">
+          <div class="btn-group btn-group-md p-3 m-0">
+            <button type="button"
+              onclick="if(confirm('Esta seguro? reiniciará el listado luego de guardar.')){location.href = '/savelist';}else{return false;}"
+              id="savelist" class="btn btn-dark">Save
+              list</button>
+            <button type="button" onclick="location.href = '/update';" class="btn btn-dark">to Update list</button>
+            <button type="button" onclick="alert('Estamos trabajando en ello')" class="btn btn-dark">to Historic
+              list</button>
+          </div>
+          <input type="hidden" name="hidden" id="hidden" value="<%= userPriority %> ">
           <!-- </div> -->
         </div>
 
