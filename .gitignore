@@ -2,6 +2,7 @@ node_modules/
 .env
 chequeo2.*
 comando.txt
+*.csv
 
 # VS Code files for those working on multiple tools
 .vscode/*

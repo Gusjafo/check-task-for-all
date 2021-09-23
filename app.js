@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+const { Parser } = require('json2csv');
+const fs = require('fs');
 
 const port = process.env.PORT || 3000;
 
@@ -279,7 +281,7 @@ app.get('/savelist', auth, (req, res) => {
                         console.log("unitRun clareada: " + unitRun);
                         cleanMainList();
                         console.log('hacia preinicio');
-                        res.redirect(302, '/preinicio')
+                        res.redirect(302, '/preinicio');
                     }
                 });
             } else {
@@ -296,7 +298,33 @@ app.get('/savelist', auth, (req, res) => {
 
 
 app.get('/historic', auth, (req, res) => {
-    res.send('Estamos trabajando en ello');
+    Historic.findOne({ $and: [{ date: 'lunes, 20 de septiembre de 2021' }, { unit: 'U 30' }] },
+        { _id: 0, __v: 0 },
+        function (err, item) {
+            if (err) {
+                console.log(err);
+                return handleError(err);
+            } if (item) {
+                // console.log(item);
+                const fields = ['numberOfTask',
+                    'action',
+                    'op',
+                    'descriptionTask',
+                    'checkbox',
+                    'timeEvent',
+                    'updatedBy',
+                    'observation'];
+                const json2csvParser = new Parser({ fields });
+                const csv = json2csvParser.parse(item.tasks);
+                fs.writeFile(`${item.date}.csv`, csv, function (err) {
+                    if (err) throw err;
+                    console.log('file saved');
+                });
+            }
+        })
+
+    res.redirect(302, '/inicio');
+    // res.send('Estamos trabajando en ello');
 })
 
 io.on('connection', (socket) => {
