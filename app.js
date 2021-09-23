@@ -314,12 +314,12 @@ app.get('/historic', auth, (req, res) => {
                     'timeEvent',
                     'updatedBy',
                     'observation'];
-                const json2csvParser = new Parser({ fields });
-                const csv = json2csvParser.parse(item.tasks);
-                fs.writeFile(`${item.date}.csv`, csv, function (err) {
-                    if (err) throw err;
-                    console.log('file saved');
-                });
+                // const json2csvParser = new Parser({ fields });
+                // const csv = json2csvParser.parse(item.tasks);
+                // fs.writeFile(`${item.date}.csv`, csv, function (err) {
+                //     if (err) throw err;
+                //     console.log('file saved');
+                // });
             }
         })
 
