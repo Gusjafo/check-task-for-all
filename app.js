@@ -256,7 +256,7 @@ app.post("/update", auth, (req, res) => {
 });
 
 app.get('/savelist', auth, (req, res) => {
-    let dayToSend = actualDay();
+    let dayToSend = actualShortDay();
     let decoded = req.res.user;
     User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } }, function (err, user) {
         if (err) {
@@ -283,14 +283,29 @@ app.get('/savelist', auth, (req, res) => {
                         console.log('hacia preinicio');
                         res.redirect(302, '/preinicio');
                     }
-                });
+                }).sort({ numberOfTask: 1 });
             } else {
                 console.log('no autorizado');
                 res.redirect(401, '/inicio');
             }
         }
     });
-})
+});
+
+app.get('/order', (req, res) => {
+    Item.find({}, function (err, item) {
+        if (err) {
+            console.log(JSON.stringify(err));
+            return handleError(err);
+        } if (item) {
+            for (let index = 0; index < item.length; index++) {
+                item[index].numberOfTask = index + 1;
+                item[index].save();
+            }
+            res.redirect('/inicio');
+        }
+    });
+});
 
 
 // The displayWarning() function presents a notification of a problem.
@@ -298,7 +313,7 @@ app.get('/savelist', auth, (req, res) => {
 
 
 app.get('/historic', auth, (req, res) => {
-    Historic.findOne({ $and: [{ date: 'lunes, 20 de septiembre de 2021' }, { unit: 'U 30' }] },
+    Historic.findOne({ $and: [{ date: '28/9/2021' }, { unit: 'U 30' }] },
         { _id: 0, __v: 0 },
         function (err, item) {
             if (err) {
@@ -314,17 +329,32 @@ app.get('/historic', auth, (req, res) => {
                     'timeEvent',
                     'updatedBy',
                     'observation'];
-                // const json2csvParser = new Parser({ fields });
-                // const csv = json2csvParser.parse(item.tasks);
-                // fs.writeFile(`${item.date}.csv`, csv, function (err) {
-                //     if (err) throw err;
-                //     console.log('file saved');
-                // });
+                const json2csvParser = new Parser({ fields });
+                const csv = json2csvParser.parse(item.tasks);
+                let fileName = item.date;
+                // let fileName = 'pepe';
+                fs.writeFile(`${fileName}.csv`, csv, function (err) {
+                    if (err) throw err;
+                    console.log('file saved');
+                    res.download(__dirname + '/' + `${fileName}.csv`,`${fileName}.csv`, function (err) {
+                        if (err) {
+                            console.log('error');
+                            console.error(err);
+                            res.end();
+                        } else {
+                            console.log('Sent:', fileName);
+                            fs.unlink(__dirname + '/' + `${fileName}.csv`, function (err) {
+                                if(err){
+                                    console.log('error');
+                                } else {
+                                    return;
+                                }
+                            })
+                        }
+                    })
+                });
             }
         })
-
-    res.redirect(302, '/inicio');
-    // res.send('Estamos trabajando en ello');
 })
 
 io.on('connection', (socket) => {
@@ -388,6 +418,15 @@ function actualDay() {
     let dayNow = currentDay.toLocaleDateString("es-ES", options);
     return (dayNow);
 };
+
+function actualShortDay(){
+    let currentDay = new Date();
+    let options = { year: 'numeric', month: 'numeric', day: "numeric" };
+    let dayNow = currentDay.toLocaleDateString("es-ES", options);
+    dayNow = dayNow.replace(/\//g,'-');
+    console.log(dayNow);
+    return (dayNow);
+}
 
 function cleanMainList() {
     Item.updateMany({},
