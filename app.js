@@ -130,7 +130,7 @@ app.post('/preinicio', auth, (req, res) => {
     // redireccionar a inicio o a historial
     // console.log(req.body.firstChoice);
     unitRun = req.body.firstChoice;
-    if (unitRun == 'U 29' || unitRun == 'U 30') {
+    if (unitRun == 'U29' || unitRun == 'U30') {
         res
             .status(200)
             .redirect(302, '/inicio');
@@ -347,7 +347,7 @@ app.get('/gethistoric', auth, function(req,res){
                     'observation'];
                 const json2csvParser = new Parser({ fields });
                 const csv = json2csvParser.parse(item.tasks);
-                let fileName = item.date;
+                let fileName = item.date + '-' + item.unit;
                 // let fileName = 'pepe';
                 fs.writeFile(`${fileName}.csv`, csv, function (err) {
                     if (err) throw err;
