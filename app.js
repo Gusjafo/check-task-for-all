@@ -312,8 +312,24 @@ app.get('/order', (req, res) => {
 // https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault
 
 
-app.get('/historic', auth, (req, res) => {
-    Historic.findOne({ $and: [{ date: '28/9/2021' }, { unit: 'U 30' }] },
+app.get('/showhistoric', auth, (req, res) => {
+    // console.log(req);
+    Historic.find({}, {date: 1, unit: 1, _id: 1}, function(err, list){
+        if (err) {
+            console.log(err);
+            return handleError(err);
+        } if (list) {
+            // console.log(list);
+            res.render('historic',{
+                list: list,
+            })
+        }
+    })
+})
+
+app.get('/gethistoric', auth, function(req,res){
+    // console.log(req.query.id);
+    Historic.findOne({ _id: req.query.id },
         { _id: 0, __v: 0 },
         function (err, item) {
             if (err) {
@@ -336,7 +352,7 @@ app.get('/historic', auth, (req, res) => {
                 fs.writeFile(`${fileName}.csv`, csv, function (err) {
                     if (err) throw err;
                     console.log('file saved');
-                    res.download(__dirname + '/' + `${fileName}.csv`,`${fileName}.csv`, function (err) {
+                    res.download(__dirname + '/' + `${fileName}.csv`, `${fileName}.csv`, function (err) {
                         if (err) {
                             console.log('error');
                             console.error(err);
@@ -344,7 +360,7 @@ app.get('/historic', auth, (req, res) => {
                         } else {
                             console.log('Sent:', fileName);
                             fs.unlink(__dirname + '/' + `${fileName}.csv`, function (err) {
-                                if(err){
+                                if (err) {
                                     console.log('error');
                                 } else {
                                     return;
@@ -354,7 +370,8 @@ app.get('/historic', auth, (req, res) => {
                     })
                 });
             }
-        })
+        }
+    )
 })
 
 io.on('connection', (socket) => {
@@ -419,11 +436,11 @@ function actualDay() {
     return (dayNow);
 };
 
-function actualShortDay(){
+function actualShortDay() {
     let currentDay = new Date();
     let options = { year: 'numeric', month: 'numeric', day: "numeric" };
     let dayNow = currentDay.toLocaleDateString("es-ES", options);
-    dayNow = dayNow.replace(/\//g,'-');
+    dayNow = dayNow.replace(/\//g, '-');
     console.log(dayNow);
     return (dayNow);
 }

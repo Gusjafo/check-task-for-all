@@ -1,0 +1,60 @@
+<%- include("header") %>
+  <style>
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+
+  <div class="conteiner text-center py-2">
+    <h1>
+      HISTORICOS
+    </h1>
+    <br>
+
+    <div class="position-relative pt-5 mt-5">
+      <ol>
+        <% list.forEach(function(item){ %>
+          <li class="">
+            <form action="/gethistoric" method="GET">
+              <input type="hidden" name="id" value="<%= item._id %>">
+              <button type="submit" class="btn btn-primary">
+                <%= item.unit %>
+                  <%= item.date %>
+              </button>
+            </form>
+          </li>
+          <br>
+          <% }); %>
+      </ol>
+    </div>
+    <div class="position-relative">
+      <div class="position-absolute bottom-0 end-0">
+        <form action="/inicio" method="GET">
+          <button type="submit" class="btn btn-dark me-5">Inicio</button>
+        </form>
+      </div>
+    </div>
+
+
+  </div>
+
+  <footer class="container text-center my-3">
+    Copyright 2021 GJF
+  </footer>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
+  </body>
+
+  </html>
