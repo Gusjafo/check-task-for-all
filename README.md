@@ -12,7 +12,7 @@ A description can also be added.
 - It has the function of saving history of task lists and downloading in * .csv format.
 - on the route "/order" you can order the tasks.
 - Different privileges with the possibility of checking or only viewing.
-- ** Login with microsoft account ** 
+- **Login with microsoft account** 
 
 ## Use
 - MongoDB connection.
