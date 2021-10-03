@@ -16,8 +16,7 @@ A description can also be added.
 
 ## Use
 - MongoDB connection.
-- App registration in Microsoft Azure Directory
-[Github pages](https://docs.microsoft.com/en-us/azure/active-directory/develop/tutorial-v2-nodejs-webapp-msal)
+- App registration in Microsoft Azure Directory (https://docs.microsoft.com/en-us/azure/active-directory/develop/tutorial-v2-nodejs-webapp-msal)
 - Use environment variables to determine privileges
   - ADMIN
   - USUARIO
