@@ -179,20 +179,24 @@ app.get("/update", auth, (req, res) => {
     let decoded = req.res.user;
 
     Item.find({}, function (err, foundMaxItem) {
+        console.log(foundMaxItem);
         if (err) {
             console.log('en error');
             console.log(JSON.stringify(err));
             numberOfMaxTask = 0;
             return handleError(err);
-        }
-        if (foundMaxItem == null ||
-            foundMaxItem == undefined ||
-            foundMaxItem == 0 ||
-            foundMaxItem.length == 0) {
-            numberOfMaxTask = 1;
-            return;
         } if (foundMaxItem) {
-            numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
+            console.log('estoy en ultimo if');
+            if (foundMaxItem == null ||
+                foundMaxItem == undefined ||
+                foundMaxItem == 0 ||
+                foundMaxItem.length == 0) {
+                numberOfMaxTask = 0;
+                console.log(numberOfMaxTask);    
+            } else {
+                numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
+                console.log(numberOfMaxTask);
+            }            
             User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
                 function (err, user) {
                     console.log('llegue a findOne');
