@@ -16,7 +16,9 @@ A description can also be added.
 
 ## Use
 `npm install` to install npm dependencies.
+
 `npm run dev` to development ( you must be installed nodemon script).
+
 `npm run start` to use.
 
 ## Requirements
