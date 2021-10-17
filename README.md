@@ -15,8 +15,16 @@ A description can also be added.
 - **Login with microsoft account** 
 
 ## Use
+`npm install` to install npm dependencies.
+`npm run dev` to development ( you must be installed nodemon script).
+`npm run start` to use.
+
+## Requirements
 - MongoDB connection.
 - App registration in Microsoft Azure Directory [MICROSOFT](https://docs.microsoft.com/en-us/azure/active-directory/develop/tutorial-v2-nodejs-webapp-msal)
 - Use environment variables to determine privileges
   - ADMIN
   - USUARIO
+
+
+**For any questions or suggestions, do not hesitate to contact me!**

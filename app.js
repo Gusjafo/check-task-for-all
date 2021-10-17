@@ -18,6 +18,9 @@ const Item = require("./model/item");
 const Historic = require("./model/historic");
 const User = require("./model/user");
 const auth = require("./middleware/auth");
+
+// global variable to determinate initial state
+//  for all users
 let unitRun = "";
 
 // Create msal application object
@@ -35,6 +38,7 @@ app.get('/', (req, res) => {
     }).catch((error) => console.log(JSON.stringify(error)));
 });
 
+// send token to client and redirect.
 app.get('/redirect', (req, res) => {
     const tokenRequest = {
         code: req.query.code,
@@ -45,36 +49,35 @@ app.get('/redirect', (req, res) => {
         let oidUser = response.account.idTokenClaims.oid;
         let tidUser = response.account.idTokenClaims.tid;
         User.findOne({ key: { oid: oidUser, tid: tidUser } }, function (err, user) {
-            //  console.log('/redirect ', user);
-            if (err) {
-                return handleError(err);
-            } else {
-                if (user === null) {
-                    addNewUser(response);
-                }
+            console.log('/redirect ', user);
+            if (err) return handleError(err);
+            if (user === null) {
+                const user = new User({
+                    email: response.account.username,
+                    name: response.account.name,
+                    key: {
+                        oid: oidUser,
+                        tid: tidUser
+                    },
+                    priority: 0
+                });
+                user.save(function (err) {
+                    if (err) return handleError(err);
+                    else {
+                        res
+                            .status(200)
+                            .cookie('token', response.idToken)
+                            .redirect('/preinicio');
+                    }
+                });
+            }
+            if (user) {
+                res
+                    .status(200)
+                    .cookie('token', response.idToken)
+                    .redirect('/preinicio');
             }
         });
-        function addNewUser(response) {
-            const user = new User({
-                email: response.account.username,
-                name: response.account.name,
-                key: {
-                    oid: oidUser,
-                    tid: tidUser
-                },
-                priority: 0
-            });
-            user.save(function (err) {
-                if (err) return handleError(err);
-                // saved!
-            });
-        };
-        setTimeout(() => {
-            res
-                .status(200)
-                .cookie('token', response.idToken)
-                .redirect('/preinicio');
-        }, 250);
     }).catch((error) => {
         console.log(JSON.stringify(error));
         res.status(500).send(error);
@@ -112,7 +115,6 @@ app.get('/preinicio', auth, (req, res) => {
             }
         });
     } else {
-        // console.log("hacia inicio");
         if (unitRun == 'historicos') {
             unitTun = '';
             return;
@@ -125,10 +127,9 @@ app.get('/preinicio', auth, (req, res) => {
     }
 });
 
+// set 'unitRun' variable.
+// redirect to historic or to main page.
 app.post('/preinicio', auth, (req, res) => {
-    // guardar si es U29 o U30 
-    // redireccionar a inicio o a historial
-    // console.log(req.body.firstChoice);
     unitRun = req.body.firstChoice;
     if (unitRun == 'U29' || unitRun == 'U30') {
         res
@@ -192,11 +193,11 @@ app.get("/update", auth, (req, res) => {
                 foundMaxItem == 0 ||
                 foundMaxItem.length == 0) {
                 numberOfMaxTask = 0;
-                console.log(numberOfMaxTask);    
+                console.log(numberOfMaxTask);
             } else {
                 numberOfMaxTask = foundMaxItem[0].numberOfTask + 1;
                 console.log(numberOfMaxTask);
-            }            
+            }
             User.findOne({ key: { oid: decoded.oid, tid: decoded.tid } },
                 function (err, user) {
                     console.log('llegue a findOne');
@@ -318,20 +319,20 @@ app.get('/order', (req, res) => {
 
 app.get('/showhistoric', auth, (req, res) => {
     // console.log(req);
-    Historic.find({}, {date: 1, unit: 1, _id: 1}, function(err, list){
+    Historic.find({}, { date: 1, unit: 1, _id: 1 }, function (err, list) {
         if (err) {
             console.log(err);
             return handleError(err);
         } if (list) {
             // console.log(list);
-            res.render('historic',{
+            res.render('historic', {
                 list: list,
             })
         }
     })
 })
 
-app.get('/gethistoric', auth, function(req,res){
+app.get('/gethistoric', auth, function (req, res) {
     // console.log(req.query.id);
     Historic.findOne({ _id: req.query.id },
         { _id: 0, __v: 0 },
